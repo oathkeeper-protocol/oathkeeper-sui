@@ -1,0 +1,53 @@
+# Env
+.env
+.env.*
+!.env.example
+secrets.yaml
+*.pem
+*.key
+signing-key-*.json
+
+# Sui Move build artifacts
+contracts/build/
+contracts/.coverage_map.mvcov
+contracts/.trace
+contracts/Move.lock
+
+# Stray installers / binaries (don't commit)
+*.dmg
+*.pkg
+*.exe
+
+# Node / pnpm
+node_modules/
+.pnpm-store/
+.next/
+out/
+dist/
+build/
+.turbo/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Test / coverage
+coverage/
+.nyc_output/
+
+# Misc
+.cache/
+tmp/

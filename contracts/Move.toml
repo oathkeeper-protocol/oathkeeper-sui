@@ -1,0 +1,14 @@
+[package]
+name = "oathkeeper"
+edition = "2024.beta"
+version = "0.1.0"
+
+[dependencies]
+# Sui framework auto-injected by the CLI based on installed version.
+# Pin explicitly once Day 1 toolchain bump (sui >= 1.55) lands.
+
+[addresses]
+oathkeeper = "0x0"
+
+[dev-addresses]
+oathkeeper = "0x0"
