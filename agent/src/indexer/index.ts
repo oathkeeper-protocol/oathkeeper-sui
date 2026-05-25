@@ -16,12 +16,16 @@
  * Day 20: add the deterministic diff loop + `dispute_attestation` PTB builder.
  */
 
-import { SuiClient } from '@mysten/sui/client';
+import { SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
+import type { PaginatedEvents } from '@mysten/sui/jsonRpc';
 import { config } from '../config.js';
 import { log } from '../log.js';
 import { EventTypes, qualifyEventType, type EventTypeKey } from '../sui/events.js';
 
-const client = new SuiClient({ url: config.sui.rpcUrl });
+const client = new SuiJsonRpcClient({
+  url: config.sui.rpcUrl,
+  network: config.sui.network,
+});
 
 const packageId = config.oathkeeper.packageId;
 if (packageId === '0x0') {
@@ -44,7 +48,7 @@ async function pollEvents(): Promise<void> {
       for (const key of eventTypeKeys) {
         if (packageId === '0x0') continue;
         const fullType = qualifyEventType(packageId, key);
-        const page = await client.queryEvents({
+        const page: PaginatedEvents = await client.queryEvents({
           query: { MoveEventType: fullType },
           cursor: cursor ?? undefined,
           limit: 50,

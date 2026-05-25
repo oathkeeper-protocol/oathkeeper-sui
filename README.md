@@ -122,6 +122,8 @@ Not a re-deployment of an existing protocol — a re-implementation in a more na
 | ed25519 signature verification | ✅ Real (Day 6) | `sui::ed25519` + `blake2b256(0x00 \|\| pk)` address derivation |
 | ecdsa_k1 / Hyperliquid signatures | ⏳ Day 16 | Test-mode pass-through with documented EIP-191 + decompress-pubkey + hash_flag gotchas |
 | Move tests | ✅ **62 passing, 0 failing** | Includes numerical conservation check (10000 + 125 in = 1125 + 9000 out) |
+| TypeScript agent scaffold | ✅ Boots + smoke-tested | `@mysten/sui@2.17` wired, testnet RPC smoke passes (chain id `4c78adac`) |
+| Reconciliation indexer | ✅ Boots + polls | Event-shape types complete; deterministic-diff logic lands Day 20 |
 | Walrus integration | ⏳ Week 2 (Day 8-9) | TypeScript SDK pipeline |
 | Seal access policy | ⏳ Week 2 (Day 11) | Move access-condition module |
 | DeepBook execution | ⏳ Week 3 (Day 15) | Agent runner places real testnet orders |
@@ -135,16 +137,22 @@ Not a re-deployment of an existing protocol — a re-implementation in a more na
 ## Run it
 
 ```bash
-# Build contracts
+# Move contracts
 cd contracts
 sui move build
-
-# Run the full test suite
 sui move test
 # expected: Test result: OK. Total tests: 62; passed: 62; failed: 0
+
+# TypeScript agent (indexer, runner, prober, smoke test against testnet)
+cd ../agent
+pnpm install
+pnpm typecheck                      # tsc --noEmit clean
+pnpm test                           # vitest — 2 unit tests pass
+pnpm smoke                          # hits testnet RPC, prints chain id + checkpoint
+pnpm indexer                        # subscribes to OathKeeper events (set OATHKEEPER_PACKAGE_ID first)
 ```
 
-The Move toolchain version used: `sui 1.60.0` (homebrew install). Pin pending Day 1 toolchain freeze.
+Toolchain versions: `sui 1.60.0` (homebrew), `node >=22`, `pnpm 9+`, `@mysten/sui 2.17`, `@mysten/walrus 1.1`.
 
 ---
 
