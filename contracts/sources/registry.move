@@ -3,12 +3,11 @@
 /// One shared `Registry` object owns two tables:
 ///   - `scope_table:  Table<ScopeKey, ID>`  enforces `(promiser, scope_hash)` uniqueness.
 ///   - `exec_table:   Table<address, ID>`   enforces single active oath per exec_addr.
-///
-/// Oath objects are stored as dynamic_object_field on the Registry so Sui Explorer +
-/// indexers can resolve them by ID (see ARCHITECTURE.md "dynamic_object_field" note).
 module oathkeeper::registry;
 
-use sui::table::Table;
+use std::bcs;
+use sui::hash;
+use sui::table::{Self, Table};
 
 // === Errors ===
 const EScopeAlreadyRegistered: u64 = 0;
@@ -33,40 +32,73 @@ public struct Registry has key {
 
 // === Init ===
 
-fun init(ctx: &mut TxContext) { abort 0 }
+fun init(ctx: &mut TxContext) {
+    let registry = Registry {
+        id: object::new(ctx),
+        scope_table: table::new<ScopeKey, ID>(ctx),
+        exec_table: table::new<address, ID>(ctx),
+    };
+    transfer::share_object(registry);
+}
 
 // === Scope-uniqueness ===
 
-public fun has_scope(registry: &Registry, promiser: address, scope_hash: vector<u8>): bool { abort 0 }
+public fun has_scope(registry: &Registry, promiser: address, scope_hash: vector<u8>): bool {
+    table::contains(&registry.scope_table, ScopeKey { promiser, scope_hash })
+}
 
 public(package) fun reserve_scope(
     registry: &mut Registry,
     promiser: address,
     scope_hash: vector<u8>,
     oath_id: ID,
-) { abort 0 }
+) {
+    let key = ScopeKey { promiser, scope_hash };
+    assert!(!table::contains(&registry.scope_table, key), EScopeAlreadyRegistered);
+    table::add(&mut registry.scope_table, key, oath_id);
+}
 
 public(package) fun release_scope(
     registry: &mut Registry,
     promiser: address,
     scope_hash: vector<u8>,
-) { abort 0 }
+) {
+    let key = ScopeKey { promiser, scope_hash };
+    assert!(table::contains(&registry.scope_table, key), EScopeNotFound);
+    table::remove(&mut registry.scope_table, key);
+}
 
 // === Exec-wallet binding ===
 
-public fun is_exec_bound(registry: &Registry, exec_addr: address): bool { abort 0 }
+public fun is_exec_bound(registry: &Registry, exec_addr: address): bool {
+    table::contains(&registry.exec_table, exec_addr)
+}
 
 public(package) fun bind_exec(
     registry: &mut Registry,
     exec_addr: address,
     oath_id: ID,
-) { abort 0 }
+) {
+    assert!(!table::contains(&registry.exec_table, exec_addr), EExecWalletBound);
+    table::add(&mut registry.exec_table, exec_addr, oath_id);
+}
 
-public(package) fun unbind_exec(registry: &mut Registry, exec_addr: address) { abort 0 }
+public(package) fun unbind_exec(registry: &mut Registry, exec_addr: address) {
+    assert!(table::contains(&registry.exec_table, exec_addr), EExecNotBound);
+    table::remove(&mut registry.exec_table, exec_addr);
+}
+
+// === Test-only init ===
+
+#[test_only]
+public fun init_for_testing(ctx: &mut TxContext) {
+    init(ctx);
+}
 
 // === Scope-hash helper ===
 
-/// Deterministic hash over (exec_addr, venue, allowed_assets, epoch_duration, oath_dims, oath_type_tag).
+/// Deterministic keccak256 over BCS-serialized preimage:
+/// (exec_addr, venue, allowed_assets, epoch_duration, oath_dims..., oath_type_tag).
 /// `oath_type_tag` ensures a TradingOath and UptimeOath with otherwise-identical fields don't collide.
 public fun compute_scope_hash(
     exec_addr: address,
@@ -78,4 +110,16 @@ public fun compute_scope_hash(
     min_pnl_bps: u64,
     min_volume_usdc: u64,
     oath_type_tag: u8,
-): vector<u8> { abort 0 }
+): vector<u8> {
+    let mut preimage = vector::empty<u8>();
+    vector::append(&mut preimage, bcs::to_bytes(&exec_addr));
+    vector::push_back(&mut preimage, venue);
+    vector::append(&mut preimage, bcs::to_bytes(&allowed_assets));
+    vector::append(&mut preimage, bcs::to_bytes(&epoch_duration_ms));
+    vector::append(&mut preimage, bcs::to_bytes(&max_drawdown_bps));
+    vector::append(&mut preimage, bcs::to_bytes(&min_trades));
+    vector::append(&mut preimage, bcs::to_bytes(&min_pnl_bps));
+    vector::append(&mut preimage, bcs::to_bytes(&min_volume_usdc));
+    vector::push_back(&mut preimage, oath_type_tag);
+    hash::keccak256(&preimage)
+}

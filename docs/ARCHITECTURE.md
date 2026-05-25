@@ -17,6 +17,30 @@ oathkeeper::standing          — DEFERRED to Week 2+. Settlement signature does
                                 doesn't touch the core settle_epoch surface.
 ```
 
+### Day 4-5 implementation corrections (locked May 21)
+
+Four signature changes from the Day 2-3 skeleton, surfaced while implementing bodies:
+
+- **`ScopeReservation` is generic over `T`.** The hot potato has to carry the bond
+  `Balance<T>` across the `start_epoch` → `bind_exec_wallet` boundary; an `amount: u64`
+  field on a non-generic struct would have orphaned the actual coin value. No abilities
+  added — the struct still has zero abilities, so the atomicity guarantee is intact.
+- **Scope-reservation table insert deferred to `bind_exec_wallet`.** `start_epoch` checks
+  `!has_scope` for an early-fail UX and constructs the hot potato; the table insert
+  happens in `bind_exec_wallet` where the real `Oath` ID is available. Race-free because
+  the entire PTB holds the `&mut Registry` lock end-to-end (Sui consensus sequences
+  shared-object access at PTB granularity, not command granularity).
+- **`doubter::claim_payout` takes `&mut LPPool<T>`.** Required for the Kept 60/40 split
+  on the Doubter's stake. Skeleton signature lacked it because settle_epoch was thought
+  to handle stakes — but stakes live inside `DoubterPosition` objects and aren't
+  reachable from `settle_epoch`, so the LP deposit has to happen at claim time.
+- **`doubter::stake_against` takes `&Clock`.** Needed to gate on `epoch_end_ms` not
+  passed; relying on `STATUS_ACTIVE` alone is brittle because mark_breach/settle aren't
+  guaranteed to fire at epoch end.
+
+LPPool construction: `init` can't be generic, so `economics::create_pool<T>` is an entry
+function called once per coin type post-deploy. Documented for the Week 4 deploy script.
+
 ### Day 2-3 interface decisions (locked May 21)
 
 - **`Oath<phantom T>` generic over coin type.** Avoids hardcoding a USDC witness — testnet

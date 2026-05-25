@@ -18,8 +18,9 @@
 | **Standing** | An Oathkeeper's reputation track record |
 | **Keep / Break** | Verbs for the two outcomes |
 | **Bond / Stake** | The Oathkeeper's principal / the Doubter's smaller wager |
+| **Verifiable opacity** | Category-level pitch phrase. The product Oathkeeper sells: the ability to make a private claim publicly costly to fake. The mechanism stays private; the outcome is bonded and verified. The universal dilemma (show-the-work / hide-the-work / bond-the-outcome) lives in `submission/PITCH-COPY.md`. |
 
-❌ Do NOT use: "trader" (use Oathkeeper), "challenger" (use Doubter), "promise" in serious prose (use Oath), "insurance" (use Bond/Stake/Settlement), "policy" (legacy 0G term — say Stake or Doubter Position).
+❌ Do NOT use: "trader" (use Oathkeeper), "challenger" (use Doubter), "promise" in serious prose (use Oath), "insurance" (use Bond/Stake/Settlement), "policy" (legacy 0G term — say Stake or Doubter Position), "bet on yourself" / "TSLA-market" framing (the product is verifiable opacity, not directional speculation).
 
 ## Track strategy (locked — do not reopen)
 
