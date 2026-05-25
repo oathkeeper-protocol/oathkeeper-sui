@@ -1,0 +1,36 @@
+{
+  "name": "oathkeeper-agent",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Off-chain runtime for Oathkeeper-Sui: Walrus + Seal pipeline, DeepBook agent runner, reconciliation indexer, HTTPS uptime prober.",
+  "type": "module",
+  "scripts": {
+    "indexer": "tsx watch src/indexer/index.ts",
+    "runner": "tsx watch src/runner/index.ts",
+    "prober": "tsx watch src/prober/index.ts",
+    "mint": "tsx src/scripts/mint-oath.ts",
+    "stake": "tsx src/scripts/stake-against.ts",
+    "settle": "tsx src/scripts/settle-epoch.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@mysten/sui": "^1.18.0",
+    "@mysten/walrus": "^0.1.0",
+    "@noble/curves": "^1.6.0",
+    "@noble/hashes": "^1.5.0",
+    "dotenv": "^16.4.5",
+    "pino": "^9.5.0",
+    "pino-pretty": "^11.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
