@@ -1,44 +1,61 @@
 /**
  * Event-shape TypeScript types for every Move event emitted by the Oathkeeper
- * contracts. The Sui SDK returns events with a `parsedJson` field — these types
- * describe its shape. Keep these in sync with the Move structs.
- *
- * Event source-of-truth: `contracts/sources/*.move` `public struct *` blocks
- * marked `has copy, drop` in event modules.
+ * v2 contracts. Keep these in sync with the Move structs.
  */
 
 // === oath.move ===
 
 export interface OathMinted {
-  oath_id: string; // ID
-  promiser: string; // address
+  oath_id: string;
+  promiser: string;
+  client: string;
   oath_type: { variant: OathTypeVariant };
-  bond_amount: string; // u64 (as decimal string in BCS)
+  bond_amount: string;
+  client_claim: string;
   epoch_end_ms: string;
 }
 
 export interface OathBroken {
   oath_id: string;
-  breach_reason: number; // u8 — see BreachReason
+  breach_reason: number;
   equity_at_breach: string;
   trade_count_at_breach: string;
 }
 
 export interface OathSettled {
   oath_id: string;
-  final_status: number; // u8 — 1=KEPT, 2=BROKEN (post-evaluation)
-  breach_reason: { vec: number[] }; // Option<u8> as { vec: [...] }
+  final_status: number;
+  breach_reason: { vec: number[] };
   bond_to_promiser: string;
-  residual_to_lp: string;
+  bond_to_client: string;
+  bond_residual_to_platform: string;
+  loser_to_platform: string;
+  loser_to_secondary: string;
+  loser_to_winners: string;
+}
+
+// === believer.move ===
+
+export interface BelieverStaked {
+  oath_id: string;
+  position_id: string;
+  believer: string;
+  stake_amount: string;
+}
+
+export interface BelieverPayout {
+  oath_id: string;
+  position_id: string;
+  believer: string;
+  amount: string;
 }
 
 // === doubter.move ===
 
-export interface StakePlaced {
+export interface DoubterStaked {
   oath_id: string;
   position_id: string;
   doubter: string;
-  claim_amount: string;
   stake_amount: string;
 }
 
@@ -47,39 +64,13 @@ export interface DoubterPayout {
   position_id: string;
   doubter: string;
   amount: string;
-  outcome: number; // u8 — 1=KEPT, 2=BROKEN
-}
-
-// === economics.move ===
-
-export interface PoolCreated {
-  pool_id: string;
-}
-
-export interface LPDeposit {
-  pool_id: string;
-  provider: string;
-  amount: string;
-  shares_minted: string;
-}
-
-export interface LPRedeem {
-  pool_id: string;
-  provider: string;
-  shares_burned: string;
-  amount: string;
-}
-
-export interface PremiumDeposited {
-  pool_id: string;
-  amount: string;
 }
 
 // === attestation.move ===
 
 export interface TradeAttested {
   oath_id: string;
-  venue_tx_hash: number[]; // vector<u8>
+  venue_tx_hash: number[];
   asset: number[];
   pnl_delta: string;
   pnl_negative: boolean;
@@ -94,7 +85,7 @@ export interface AttestationDisputed {
   disputer: string;
 }
 
-// === Tag → type mapping ===
+// === Enums + constants ===
 
 export type OathTypeVariant =
   | 'TradingOath'
@@ -121,27 +112,25 @@ export const Status = {
 
 export type Status = (typeof Status)[keyof typeof Status];
 
-/**
- * Full event-type-string registry. The Move full type for each event is
- * `<package>::<module>::<EventName>`. Resolved at runtime once the package ID
- * is known (post-publish).
- */
+export const SplitBps = {
+  Platform: 1000,
+  Secondary: 2000,
+  Winner: 7000,
+} as const;
+
 export const EventTypes = {
   OathMinted: 'oath::OathMinted',
   OathBroken: 'oath::OathBroken',
   OathSettled: 'oath::OathSettled',
-  StakePlaced: 'doubter::StakePlaced',
+  BelieverStaked: 'believer::BelieverStaked',
+  BelieverPayout: 'believer::BelieverPayout',
+  DoubterStaked: 'doubter::DoubterStaked',
   DoubterPayout: 'doubter::DoubterPayout',
-  PoolCreated: 'economics::PoolCreated',
-  LPDeposit: 'economics::LPDeposit',
-  LPRedeem: 'economics::LPRedeem',
-  PremiumDeposited: 'economics::PremiumDeposited',
   TradeAttested: 'attestation::TradeAttested',
   AttestationDisputed: 'attestation::AttestationDisputed',
 } as const;
 
 export type EventTypeKey = keyof typeof EventTypes;
 
-/** Build the fully-qualified Move event type for a given package address. */
 export const qualifyEventType = (packageId: string, key: EventTypeKey): string =>
   `${packageId}::${EventTypes[key]}`;
