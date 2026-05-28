@@ -1,0 +1,815 @@
+export default function Home() {
+  return (
+    <div
+      style={{ background: "var(--background)", color: "var(--foreground)" }}
+      className="font-sans"
+    >
+      {/* ── Nav ──────────────────────────────────────────────────────────────── */}
+      <nav
+        style={{ borderBottom: "1px solid var(--stone-200)", background: "var(--stone-50)" }}
+        className="sticky top-0 z-50"
+        aria-label="Site navigation"
+      >
+        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+          <span
+            className="font-semibold text-sm tracking-tight"
+            style={{ color: "var(--stone-950)" }}
+          >
+            Oathkeeper
+          </span>
+          <div className="flex items-center gap-6">
+            <a href="#how-it-works" className="nav-link">
+              How it works
+            </a>
+            <a href="#verticals" className="nav-link">
+              Verticals
+            </a>
+            <a href="#" className="btn-primary" style={{ padding: "0.375rem 1rem" }}>
+              Launch App
+            </a>
+          </div>
+        </div>
+      </nav>
+
+      {/* ── Hero ─────────────────────────────────────────────────────────────── */}
+      <section
+        className="max-w-6xl mx-auto px-6"
+        style={{ paddingTop: "clamp(4rem, 8vw, 7rem)", paddingBottom: "clamp(4rem, 6vw, 6rem)" }}
+        aria-label="Hero"
+      >
+        <div className="max-w-3xl">
+          <div
+            className="font-mono text-xs mb-6 tracking-widest uppercase"
+            style={{ color: "var(--oxide)", letterSpacing: "0.12em" }}
+          >
+            Onchain SLA infrastructure
+          </div>
+
+          <h1
+            className="font-bold leading-none tracking-tight mb-8"
+            style={{
+              fontSize: "clamp(2.75rem, 6vw, 5rem)",
+              color: "var(--stone-950)",
+              lineHeight: 1.05,
+            }}
+          >
+            Bond the outcome.
+            <br />
+            <span style={{ color: "var(--stone-700)" }}>Keep the work private.</span>
+          </h1>
+
+          <p
+            className="mb-10 leading-relaxed"
+            style={{
+              fontSize: "clamp(1.05rem, 1.5vw, 1.2rem)",
+              color: "var(--stone-700)",
+              maxWidth: "58ch",
+            }}
+          >
+            Operators bond capital against promises. Clients register SLA claims
+            against that bond. Open markets price reliability in real time.
+            Settlement is automatic.
+          </p>
+
+          <div className="flex flex-wrap gap-4">
+            <a href="#" className="btn-primary" style={{ padding: "0.75rem 1.5rem" }}>
+              Launch App
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                <path d="M2.5 7h9M7 2.5l4.5 4.5L7 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </a>
+            <a href="#" className="btn-secondary">
+              Read the Docs
+            </a>
+          </div>
+        </div>
+
+        {/* Settlement conservation strip */}
+        <div
+          className="mt-20 font-mono text-sm flex flex-wrap gap-x-8 gap-y-2 items-center"
+          style={{ color: "var(--stone-500)" }}
+        >
+          <span>Bond at risk</span>
+          <span style={{ color: "var(--stone-400)" }}>+</span>
+          <span>Stake in</span>
+          <span style={{ color: "var(--stone-400)" }}>=</span>
+          <span style={{ color: "var(--stone-950)", fontWeight: 600 }}>Stake out</span>
+          <span style={{ color: "var(--stone-400)" }}>+</span>
+          <span>10% platform</span>
+          <span style={{ color: "var(--stone-400)" }}>+</span>
+          <span>Winners</span>
+          <span
+            className="ml-auto hidden sm:inline text-xs"
+            style={{
+              background: "var(--oxide-surface)",
+              color: "var(--oxide)",
+              padding: "2px 8px",
+              borderRadius: 4,
+              border: "1px solid var(--oxide-dim)",
+            }}
+          >
+            conservation holds always
+          </span>
+        </div>
+      </section>
+
+      {/* ── Problem ──────────────────────────────────────────────────────────── */}
+      <section
+        style={{ borderTop: "1px solid var(--stone-200)", background: "var(--stone-100)" }}
+        aria-label="The problem"
+      >
+        <div
+          className="max-w-6xl mx-auto px-6"
+          style={{ paddingTop: "clamp(3rem, 5vw, 5rem)", paddingBottom: "clamp(3rem, 5vw, 5rem)" }}
+        >
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-12 lg:gap-20 items-start">
+            <div>
+              <h2
+                className="font-bold tracking-tight leading-tight"
+                style={{ fontSize: "clamp(1.6rem, 2.5vw, 2rem)", color: "var(--stone-950)" }}
+              >
+                The dilemma every operator faces
+              </h2>
+            </div>
+
+            <ol style={{ listStyle: "none", margin: 0, padding: 0 }}>
+              {([
+                {
+                  n: "01",
+                  label: "Show the work",
+                  desc: "Publish the strategy and the edge decays. Copiers extract the alpha. The operator is left with execution costs and no premium.",
+                  answer: false,
+                },
+                {
+                  n: "02",
+                  label: "Hide the work",
+                  desc: "Operate in private and the claims become worthless. No verifiable record. No trust. Allocators pass.",
+                  answer: false,
+                },
+                {
+                  n: "03",
+                  label: "Bond the outcome",
+                  desc: "Post capital against specific, measurable results. The strategy stays hidden. The commitment is public. Both halves resolve.",
+                  answer: true,
+                },
+              ] as const).map(({ n, label, desc, answer }, i) => (
+                <li
+                  key={n}
+                  style={{
+                    borderTop: i === 0 ? "1px solid var(--stone-200)" : undefined,
+                    borderBottom: "1px solid var(--stone-200)",
+                    paddingTop: answer ? "1.75rem" : "1.25rem",
+                    paddingBottom: answer ? "1.75rem" : "1.25rem",
+                    background: answer ? "var(--oxide-surface)" : "transparent",
+                    marginLeft: answer ? "-1.5rem" : 0,
+                    marginRight: answer ? "-1.5rem" : 0,
+                    paddingLeft: answer ? "1.5rem" : 0,
+                    paddingRight: answer ? "1.5rem" : 0,
+                  }}
+                >
+                  <div className="flex gap-6 items-start">
+                    <span
+                      className="font-mono font-semibold shrink-0"
+                      style={{
+                        fontSize: answer ? "1.1rem" : "0.75rem",
+                        color: answer ? "var(--oxide)" : "var(--stone-400)",
+                        letterSpacing: "0.04em",
+                        lineHeight: 1.6,
+                        minWidth: "2.5rem",
+                      }}
+                    >
+                      {n}
+                    </span>
+                    <div>
+                      <div
+                        className="font-semibold mb-1"
+                        style={{
+                          fontSize: answer ? "1.1rem" : "0.95rem",
+                          color: answer ? "var(--stone-950)" : "var(--stone-700)",
+                        }}
+                      >
+                        {label}
+                        {!answer && (
+                          <span
+                            className="ml-3 font-mono text-xs"
+                            style={{ color: "var(--stone-400)" }}
+                          >
+                            fails
+                          </span>
+                        )}
+                        {answer && (
+                          <span
+                            className="ml-3 font-mono text-xs"
+                            style={{
+                              color: "var(--oxide)",
+                              background: "var(--oxide-dim)",
+                              padding: "1px 7px",
+                              borderRadius: 3,
+                            }}
+                          >
+                            the answer
+                          </span>
+                        )}
+                      </div>
+                      <p
+                        className="leading-relaxed"
+                        style={{
+                          fontSize: answer ? "0.975rem" : "0.9rem",
+                          color: answer ? "var(--stone-700)" : "var(--stone-500)",
+                          maxWidth: "54ch",
+                        }}
+                      >
+                        {desc}
+                      </p>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      {/* ── How it works ─────────────────────────────────────────────────────── */}
+      <section
+        id="how-it-works"
+        style={{ borderTop: "1px solid var(--stone-200)" }}
+        aria-label="How it works"
+      >
+        <div
+          className="max-w-6xl mx-auto px-6"
+          style={{ paddingTop: "clamp(3rem, 5vw, 5rem)", paddingBottom: "clamp(3rem, 5vw, 5rem)" }}
+        >
+          <h2
+            className="font-bold tracking-tight mb-12"
+            style={{ fontSize: "clamp(1.4rem, 2vw, 1.75rem)", color: "var(--stone-950)" }}
+          >
+            How an oath lifecycle works
+          </h2>
+
+          <div className="relative">
+            {/* Connector line on desktop */}
+            <div
+              className="hidden lg:block absolute"
+              style={{
+                top: "1.25rem",
+                left: "5rem",
+                right: "5rem",
+                height: 1,
+                background: "var(--stone-200)",
+                zIndex: 0,
+              }}
+              aria-hidden="true"
+            />
+
+            <ol
+              className="grid grid-cols-1 sm:grid-cols-5 gap-8 lg:gap-6 relative z-10"
+              style={{ listStyle: "none", margin: 0, padding: 0 }}
+            >
+              {([
+                {
+                  step: 1,
+                  role: "Operator",
+                  action: "Bonds capital",
+                  desc: "Posts USDC bond against a multi-dimensional SLA. Wallet signature binds the execution address.",
+                  active: true,
+                },
+                {
+                  step: 2,
+                  role: "Client",
+                  action: "Registers claim",
+                  desc: "Counter-party registers a formal claim against the bond. No capital required.",
+                  active: true,
+                },
+                {
+                  step: 3,
+                  role: "Market",
+                  action: "Prices reliability",
+                  desc: "Believers and Doubters stake. Pool ratios are public in real time.",
+                  active: true,
+                },
+                {
+                  step: 4,
+                  role: "Indexer",
+                  action: "Tracks performance",
+                  desc: "Open-source reconciliation indexer diffs attestations against venue history.",
+                  active: false,
+                },
+                {
+                  step: 5,
+                  role: "Protocol",
+                  action: "Settles automatically",
+                  desc: "On epoch end or breach, settlement executes on-chain. No arbitration.",
+                  active: false,
+                },
+              ] as const).map(({ step, role, action, desc, active }) => (
+                <li key={step} className="flex flex-col gap-2">
+                  <div className="flex items-start gap-3 lg:flex-col">
+                    <div
+                      className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-mono font-semibold"
+                      style={{
+                        background: active ? "var(--oxide)" : "var(--stone-200)",
+                        color: active ? "oklch(0.98 0.003 50)" : "var(--stone-700)",
+                        fontSize: "0.8rem",
+                        position: "relative",
+                        zIndex: 1,
+                      }}
+                    >
+                      {step}
+                    </div>
+                    <div>
+                      <div
+                        className="font-mono text-xs mb-0.5"
+                        style={{ color: "var(--stone-400)", letterSpacing: "0.05em" }}
+                      >
+                        {role}
+                      </div>
+                      <div
+                        className="font-semibold"
+                        style={{ fontSize: "0.95rem", color: "var(--stone-950)" }}
+                      >
+                        {action}
+                      </div>
+                    </div>
+                  </div>
+                  <p
+                    className="leading-relaxed"
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "var(--stone-500)",
+                      maxWidth: "30ch",
+                    }}
+                  >
+                    {desc}
+                  </p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Five Roles ───────────────────────────────────────────────────────── */}
+      <section
+        style={{ borderTop: "1px solid var(--stone-200)", background: "var(--stone-100)" }}
+        aria-label="Five roles"
+      >
+        <div
+          className="max-w-6xl mx-auto px-6"
+          style={{ paddingTop: "clamp(3rem, 5vw, 5rem)", paddingBottom: "clamp(3rem, 5vw, 5rem)" }}
+        >
+          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-12 lg:gap-20">
+            <div>
+              <h2
+                className="font-bold tracking-tight leading-tight"
+                style={{ fontSize: "clamp(1.4rem, 2vw, 1.75rem)", color: "var(--stone-950)" }}
+              >
+                Five roles, one settlement
+              </h2>
+              <p
+                className="mt-4 leading-relaxed"
+                style={{ fontSize: "0.9rem", color: "var(--stone-500)", maxWidth: "30ch" }}
+              >
+                Every oath involves all five. Settlement distributes to all in a
+                single on-chain transaction. Total in equals total out.
+              </p>
+            </div>
+
+            <div>
+              {/* Table header — visible only on lg+ where 3-col is rendered */}
+              <div
+                className="hidden lg:grid font-mono text-xs mb-2 gap-x-4 grid-cols-3"
+                style={{
+                  color: "var(--stone-400)",
+                  letterSpacing: "0.07em",
+                  textTransform: "uppercase",
+                }}
+                aria-hidden="true"
+              >
+                <span>What they do</span>
+                <span>What they earn</span>
+                <span>What they risk</span>
+              </div>
+
+              {([
+                {
+                  name: "Oathkeeper",
+                  tag: "Operator",
+                  does: "Bonds capital against a multi-dimensional SLA commitment",
+                  earns: "Bond returned + 20% of Doubter stakes (if Kept)",
+                  risks: "Full bond loss (if Broken)",
+                  highlight: true,
+                },
+                {
+                  name: "Client",
+                  tag: "Counterparty",
+                  does: "Registers an SLA claim against the Oathkeeper bond",
+                  earns: "Bond claim + 20% of Believer stakes (if Broken)",
+                  risks: "Nothing. No capital required",
+                  highlight: false,
+                },
+                {
+                  name: "Believer",
+                  tag: "Market",
+                  does: "Stakes capital in favor of the Oathkeeper keeping the oath",
+                  earns: "70% of Doubter stakes, pro-rata (if Kept)",
+                  risks: "Full stake loss (if Broken)",
+                  highlight: false,
+                },
+                {
+                  name: "Doubter",
+                  tag: "Market",
+                  does: "Stakes capital against the Oathkeeper keeping the oath",
+                  earns: "70% of Believer stakes, pro-rata (if Broken)",
+                  risks: "Full stake loss (if Kept)",
+                  highlight: false,
+                },
+                {
+                  name: "Platform",
+                  tag: "Protocol",
+                  does: "Provides the settlement infrastructure and verification layer",
+                  earns: "10% of loser stakes on every settlement",
+                  risks: "Nothing. Guaranteed fee regardless of outcome",
+                  highlight: false,
+                },
+              ] as const).map(({ name, tag, does, earns, risks, highlight }) => (
+                <div
+                  key={name}
+                  className="py-4"
+                  style={{
+                    borderTop: "1px solid var(--stone-200)",
+                    background: highlight ? "var(--oxide-surface)" : "transparent",
+                    marginLeft: highlight ? "-1.5rem" : 0,
+                    marginRight: highlight ? "-1.5rem" : 0,
+                    paddingLeft: highlight ? "1.5rem" : 0,
+                    paddingRight: highlight ? "1.5rem" : 0,
+                  }}
+                >
+                  {/* Role name row */}
+                  <div className="mb-2">
+                    <span
+                      className="font-semibold"
+                      style={{
+                        fontSize: "0.95rem",
+                        color: highlight ? "var(--oxide)" : "var(--stone-950)",
+                      }}
+                    >
+                      {name}
+                    </span>
+                    <span
+                      className="font-mono text-xs ml-3"
+                      style={{ color: "var(--stone-400)" }}
+                    >
+                      {tag}
+                    </span>
+                  </div>
+                  {/* Details — stacked on mobile, 3-col on lg+ */}
+                  <div className="grid gap-3 lg:gap-x-4 lg:grid-cols-3">
+                    <p className="text-sm leading-snug" style={{ color: "var(--stone-600)" }}>
+                      <span className="font-mono text-xs block mb-0.5 lg:hidden" style={{ color: "var(--stone-400)" }}>DO</span>
+                      {does}
+                    </p>
+                    <p className="text-sm leading-snug" style={{ color: "var(--stone-700)" }}>
+                      <span className="font-mono text-xs block mb-0.5 lg:hidden" style={{ color: "var(--stone-400)" }}>EARN</span>
+                      {earns}
+                    </p>
+                    <p className="text-sm leading-snug" style={{ color: "var(--stone-500)" }}>
+                      <span className="font-mono text-xs block mb-0.5 lg:hidden" style={{ color: "var(--stone-400)" }}>RISK</span>
+                      {risks}
+                    </p>
+                  </div>
+                </div>
+              ))}
+
+              {/* Conservation proofs */}
+              <div className="mt-6 space-y-2">
+                <div
+                  className="font-mono text-xs"
+                  style={{
+                    color: "var(--stone-500)",
+                    padding: "0.625rem 0.75rem",
+                    background: "var(--stone-200)",
+                    borderRadius: 6,
+                  }}
+                >
+                  <span style={{ color: "var(--oxide)", fontWeight: 600, marginRight: "1rem" }}>Kept:</span>
+                  Bond + Doubter stakes = Bond returned + 70% Believers + 20% Oathkeeper + 10% Platform
+                </div>
+                <div
+                  className="font-mono text-xs"
+                  style={{
+                    color: "var(--stone-500)",
+                    padding: "0.625rem 0.75rem",
+                    background: "var(--stone-200)",
+                    borderRadius: 6,
+                  }}
+                >
+                  <span style={{ color: "var(--stone-700)", fontWeight: 600, marginRight: "1rem" }}>Broken:</span>
+                  Bond + Believer stakes = Client claim + 70% Doubters + 20% Client + 10% Platform
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Three Verticals ──────────────────────────────────────────────────── */}
+      <section
+        id="verticals"
+        style={{ borderTop: "1px solid var(--stone-200)" }}
+        aria-label="Verticals"
+      >
+        <div
+          className="max-w-6xl mx-auto px-6"
+          style={{ paddingTop: "clamp(3rem, 5vw, 5rem)", paddingBottom: "clamp(3rem, 5vw, 5rem)" }}
+        >
+          <h2
+            className="font-bold tracking-tight mb-10"
+            style={{ fontSize: "clamp(1.4rem, 2vw, 1.75rem)", color: "var(--stone-950)" }}
+          >
+            The work stays hidden. The outcome gets bonded.
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {([
+              {
+                status: "LIVE",
+                name: "AI Trading",
+                type: "TradingOath",
+                hidden: "Strategy, model weights, position sizing",
+                bonded: "Max drawdown / min trades / min PnL",
+                detail:
+                  "DeepBook + Hyperliquid execution. Per-trade attestations stored on Walrus. Reconciliation indexer verifies fills open-source.",
+                active: true,
+              },
+              {
+                status: "LIVE",
+                name: "RPC Uptime",
+                type: "UptimeOath",
+                hidden: "Infrastructure topology, failover logic",
+                bonded: "Uptime percentage over epoch",
+                detail:
+                  "Open-source HTTPS prober attests availability. On-chain record. Client gets claim on bond if SLA breaks.",
+                active: true,
+              },
+              {
+                status: "MOCK",
+                name: "AI Behavior",
+                type: "BehaviorOath",
+                hidden: "Model weights, training data, inference pipeline",
+                bonded: "Behavior score over evaluation window",
+                detail:
+                  "Mock judge attestation in v1. Contract enum dispatch is real. Live adapter ships in v2.",
+                active: false,
+              },
+            ] as const).map(({ status, name, type, hidden, bonded, detail, active }) => (
+              <div
+                key={name}
+                style={{
+                  border: "1px solid var(--stone-200)",
+                  borderRadius: 10,
+                  padding: "1.5rem",
+                  background: active ? "white" : "var(--stone-100)",
+                  opacity: active ? 1 : 0.75,
+                }}
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <div
+                      className="font-mono text-xs mb-1"
+                      style={{
+                        color: active ? "var(--oxide)" : "var(--stone-400)",
+                        letterSpacing: "0.08em",
+                      }}
+                    >
+                      {status}
+                    </div>
+                    <div
+                      className="font-semibold"
+                      style={{ fontSize: "1.05rem", color: "var(--stone-950)" }}
+                    >
+                      {name}
+                    </div>
+                  </div>
+                  <span
+                    className="font-mono text-xs shrink-0"
+                    style={{
+                      color: "var(--stone-400)",
+                      background: "var(--stone-100)",
+                      padding: "2px 8px",
+                      borderRadius: 4,
+                      border: "1px solid var(--stone-200)",
+                    }}
+                  >
+                    {type}
+                  </span>
+                </div>
+
+                <div className="space-y-3 mb-4">
+                  <div>
+                    <div
+                      className="font-mono text-xs mb-1"
+                      style={{ color: "var(--stone-400)", letterSpacing: "0.05em" }}
+                    >
+                      HIDDEN
+                    </div>
+                    <p className="text-sm leading-snug" style={{ color: "var(--stone-500)" }}>
+                      {hidden}
+                    </p>
+                  </div>
+                  <div>
+                    <div
+                      className="font-mono text-xs mb-1"
+                      style={{
+                        color: active ? "var(--oxide)" : "var(--stone-400)",
+                        letterSpacing: "0.05em",
+                      }}
+                    >
+                      BONDED
+                    </div>
+                    <p
+                      className="text-sm font-medium leading-snug"
+                      style={{ color: active ? "var(--stone-950)" : "var(--stone-600)" }}
+                    >
+                      {bonded}
+                    </p>
+                  </div>
+                </div>
+
+                <p className="text-xs leading-relaxed" style={{ color: "var(--stone-400)" }}>
+                  {detail}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* Roadmap verticals */}
+          <div className="flex flex-wrap gap-3 items-center">
+            <span
+              className="font-mono text-xs"
+              style={{ color: "var(--stone-400)", letterSpacing: "0.06em" }}
+            >
+              ROADMAP
+            </span>
+            {(["ValidatorOath", "TreasuryOath"] as const).map((v) => (
+              <span
+                key={v}
+                className="font-mono text-xs px-3 py-1.5 rounded"
+                style={{
+                  color: "var(--stone-400)",
+                  border: "1px dashed var(--stone-200)",
+                  background: "var(--stone-50)",
+                }}
+              >
+                {v}
+              </span>
+            ))}
+            <span className="text-xs" style={{ color: "var(--stone-400)" }}>
+              Enum variants defined. Implementations in v2.
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Built on Sui ─────────────────────────────────────────────────────── */}
+      <section
+        style={{ borderTop: "1px solid var(--stone-200)", background: "var(--stone-100)" }}
+        aria-label="Technology stack"
+      >
+        <div
+          className="max-w-6xl mx-auto px-6"
+          style={{ paddingTop: "clamp(3rem, 5vw, 5rem)", paddingBottom: "clamp(3rem, 5vw, 5rem)" }}
+        >
+          <h2
+            className="font-bold tracking-tight mb-10"
+            style={{ fontSize: "clamp(1.4rem, 2vw, 1.75rem)", color: "var(--stone-950)" }}
+          >
+            Built on Sui
+          </h2>
+
+          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-16 gap-y-8">
+            {([
+              {
+                tech: "Sui Move",
+                role: "Contracts",
+                desc: "Native object model. Oath lifecycle, stake accounting, and settlement logic all in Move. No EVM translation.",
+              },
+              {
+                tech: "Walrus",
+                role: "Storage",
+                desc: "Sealed oath text and per-trade attestation blobs stored on-chain. Merkle root in the oath object.",
+              },
+              {
+                tech: "Seal",
+                role: "Access control",
+                desc: "Authorized runtime decrypts sealed oath contents only when settlement conditions allow. Not TEE.",
+              },
+              {
+                tech: "DeepBook",
+                role: "Execution",
+                desc: "Native Sui execution venue. Fills are attested on-chain and reconciled by the open-source indexer.",
+              },
+            ] as const).map(({ tech, role, desc }) => (
+              <div key={tech} className="flex gap-5 items-start">
+                <div
+                  className="shrink-0 font-mono font-semibold text-sm px-3 py-1.5 rounded"
+                  style={{
+                    background: "var(--stone-200)",
+                    color: "var(--stone-700)",
+                    whiteSpace: "nowrap",
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {tech}
+                </div>
+                <div>
+                  <dt
+                    className="font-mono text-xs mb-1"
+                    style={{ color: "var(--stone-400)", letterSpacing: "0.06em" }}
+                  >
+                    {role.toUpperCase()}
+                  </dt>
+                  <dd
+                    className="text-sm leading-relaxed"
+                    style={{ color: "var(--stone-600)", maxWidth: "44ch" }}
+                  >
+                    {desc}
+                  </dd>
+                </div>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+
+      {/* ── CTA Footer ───────────────────────────────────────────────────────── */}
+      <footer
+        style={{ borderTop: "1px solid var(--stone-200)", background: "var(--stone-950)" }}
+        aria-label="Call to action and footer"
+      >
+        <div
+          className="max-w-6xl mx-auto px-6"
+          style={{ paddingTop: "clamp(3rem, 5vw, 5rem)", paddingBottom: "clamp(3rem, 5vw, 5rem)" }}
+        >
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <div
+                className="font-mono text-xs mb-4"
+                style={{ color: "var(--oxide)", letterSpacing: "0.1em" }}
+              >
+                Sui Overflow 2026
+              </div>
+              <h2
+                className="font-bold tracking-tight leading-tight mb-4"
+                style={{
+                  fontSize: "clamp(1.75rem, 3vw, 2.5rem)",
+                  color: "oklch(0.97 0.003 50)",
+                }}
+              >
+                Oathkeeper.
+                <br />
+                <span style={{ color: "var(--stone-400)" }}>Onchain SLA infrastructure.</span>
+              </h2>
+              <p
+                className="leading-relaxed"
+                style={{ fontSize: "0.95rem", color: "var(--stone-500)", maxWidth: "48ch" }}
+              >
+                Bond capital. Keep the strategy private. Let open markets price
+                your reliability. Settle on-chain without arbitration.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-4 lg:items-start">
+              <div className="flex flex-wrap gap-4">
+                <a href="#" className="btn-primary btn-primary-lg">
+                  Launch App
+                </a>
+                <a href="#" className="btn-secondary-dark">
+                  View on GitHub
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                    <path d="M3 3h8v8M3 11L11 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </a>
+              </div>
+              <p className="font-mono text-xs" style={{ color: "var(--stone-600)" }}>
+                DeFi and Payments track. Testnet deployed. MIT licensed.
+              </p>
+            </div>
+          </div>
+
+          <div
+            className="mt-16 pt-6 flex flex-wrap items-center justify-between gap-4"
+            style={{ borderTop: "1px solid var(--stone-800)" }}
+          >
+            <span className="font-mono text-xs" style={{ color: "var(--stone-600)" }}>
+              Oathkeeper Protocol
+            </span>
+            <span className="font-mono text-xs" style={{ color: "var(--stone-700)" }}>
+              Settlement is deterministic. Outcomes are neutral.
+            </span>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
