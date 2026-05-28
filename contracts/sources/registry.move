@@ -28,6 +28,7 @@ public struct Registry has key {
     id: UID,
     scope_table: Table<ScopeKey, ID>,
     exec_table: Table<address, ID>,
+    platform_treasury: address,
 }
 
 // === Init ===
@@ -37,9 +38,14 @@ fun init(ctx: &mut TxContext) {
         id: object::new(ctx),
         scope_table: table::new<ScopeKey, ID>(ctx),
         exec_table: table::new<address, ID>(ctx),
+        platform_treasury: tx_context::sender(ctx),
     };
     transfer::share_object(registry);
 }
+
+// === Platform treasury ===
+
+public fun platform_treasury(registry: &Registry): address { registry.platform_treasury }
 
 // === Scope-uniqueness ===
 

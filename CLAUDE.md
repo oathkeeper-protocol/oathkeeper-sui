@@ -12,15 +12,20 @@
 
 | Term | Meaning |
 |------|---------|
-| **Oathkeeper** | Protocol name + the user role that bonds against an oath |
-| **Oath** | The on-chain commitment object |
-| **Doubter** | The user role that stakes against an oath |
-| **Standing** | An Oathkeeper's reputation track record |
+| **Oathkeeper** | Protocol name + the user role (operator) that bonds against an oath / SLA |
+| **Oath** | The on-chain SLA commitment object |
+| **Client** | The counterparty receiving the service. Registers a claim against the bond. Doesn't stake capital. |
+| **Believer** | Open-market participant who stakes FOR the Oathkeeper. Wins from Doubter stakes on Kept. |
+| **Doubter** | Open-market participant who stakes AGAINST the Oathkeeper. Wins from Believer stakes on Broken. |
+| **Standing** | An Oathkeeper's on-chain track record of kept oaths. The product the bond buys. |
 | **Keep / Break** | Verbs for the two outcomes |
-| **Bond / Stake** | The Oathkeeper's principal / the Doubter's smaller wager |
-| **Verifiable opacity** | Category-level pitch phrase. The product Oathkeeper sells: the ability to make a private claim publicly costly to fake. The mechanism stays private; the outcome is bonded and verified. The universal dilemma (show-the-work / hide-the-work / bond-the-outcome) lives in `submission/PITCH-COPY.md`. |
+| **Bond** | The Oathkeeper's principal capital at risk |
+| **Stake** | Capital placed by Believers or Doubters into the open-market pricing layer |
+| **Platform** | The protocol itself. Earns 10% of loser stakes on every settlement. |
+| **Verifiable opacity** | Category-level pitch phrase. The product Oathkeeper sells: the ability to make a private claim publicly costly to fake. |
+| **Onchain SLA infrastructure** | What Oathkeeper IS. Operators bond → Clients register SLA claims → open markets price reliability → settlement is automatic. |
 
-❌ Do NOT use: "trader" (use Oathkeeper), "challenger" (use Doubter), "promise" in serious prose (use Oath), "insurance" (use Bond/Stake/Settlement), "policy" (legacy 0G term — say Stake or Doubter Position), "bet on yourself" / "TSLA-market" framing (the product is verifiable opacity, not directional speculation).
+❌ Do NOT use: "trader" (use Oathkeeper), "challenger" (use Doubter), "promise" in serious prose (use Oath), "insurance" (use Bond/Stake/Settlement), "policy" (legacy 0G term), "prediction market" (structurally different), "bet on yourself" / "TSLA-market" framing, "protocol skims nothing" (protocol takes explicit 10% fee, disclosed).
 
 ## Track strategy (locked — do not reopen)
 
