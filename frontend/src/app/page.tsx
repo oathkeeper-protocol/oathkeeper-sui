@@ -1,3 +1,47 @@
+function CompassMark({ size = 24 }: { size?: number }) {
+  const r = size / 2;
+  const c = r;
+  const cardinal = "oklch(0.55 0.02 250)"; // steel
+  const ordinal = "oklch(0.62 0.15 75)"; // gold
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox={`0 0 ${size} ${size}`}
+      aria-hidden="true"
+    >
+      {/* N/S/E/W cardinals */}
+      <line x1={c} y1={1} x2={c} y2={r - 3} stroke={cardinal} strokeWidth={1.5} />
+      <line x1={c} y1={r + 3} x2={c} y2={size - 1} stroke={cardinal} strokeWidth={1.5} />
+      <line x1={1} y1={c} x2={r - 3} y2={c} stroke={cardinal} strokeWidth={1.5} />
+      <line x1={r + 3} y1={c} x2={size - 1} y2={c} stroke={cardinal} strokeWidth={1.5} />
+      {/* NE/NW/SE/SW ordinals */}
+      <line x1={r + 2} y1={r - 2} x2={size - 3} y2={3} stroke={ordinal} strokeWidth={1} />
+      <line x1={r - 2} y1={r - 2} x2={3} y2={3} stroke={ordinal} strokeWidth={1} />
+      <line x1={r + 2} y1={r + 2} x2={size - 3} y2={size - 3} stroke={ordinal} strokeWidth={1} />
+      <line x1={r - 2} y1={r + 2} x2={3} y2={size - 3} stroke={ordinal} strokeWidth={1} />
+      <circle cx={c} cy={c} r={1.5} fill={cardinal} />
+    </svg>
+  );
+}
+
+function SectionMarker({ index, label }: { index: string; label?: string }) {
+  return (
+    <div
+      className="font-mono text-xs mb-5 flex items-center gap-2"
+      style={{ color: "var(--gold)" }}
+    >
+      <span>{index}</span>
+      {label && (
+        <>
+          <span style={{ color: "var(--bone-300)" }}>·</span>
+          <span style={{ color: "var(--bone-400)" }}>{label}</span>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function Home() {
   return (
     <div
@@ -6,17 +50,20 @@ export default function Home() {
     >
       {/* ── Nav ──────────────────────────────────────────────────────────────── */}
       <nav
-        style={{ borderBottom: "1px solid var(--stone-200)", background: "var(--stone-50)" }}
+        style={{ borderBottom: "1px solid var(--bone-200)", background: "var(--cream)" }}
         className="sticky top-0 z-50"
         aria-label="Site navigation"
       >
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-          <span
-            className="font-semibold text-sm tracking-tight"
-            style={{ color: "var(--stone-950)" }}
-          >
-            Oathkeeper
-          </span>
+          <div className="flex items-center gap-2.5">
+            <CompassMark size={20} />
+            <span
+              className="font-semibold text-sm tracking-tight"
+              style={{ color: "var(--bone-950)" }}
+            >
+              Oathkeeper
+            </span>
+          </div>
           <div className="flex items-center gap-6">
             <a href="#how-it-works" className="nav-link">
               How it works
@@ -39,8 +86,8 @@ export default function Home() {
       >
         <div className="max-w-3xl">
           <div
-            className="font-mono text-xs mb-6 tracking-widest uppercase"
-            style={{ color: "var(--oxide)", letterSpacing: "0.12em" }}
+            className="font-mono text-xs mb-6"
+            style={{ color: "var(--gold)" }}
           >
             Onchain SLA infrastructure
           </div>
@@ -49,20 +96,20 @@ export default function Home() {
             className="font-bold leading-none tracking-tight mb-8"
             style={{
               fontSize: "clamp(2.75rem, 6vw, 5rem)",
-              color: "var(--stone-950)",
+              color: "var(--bone-950)",
               lineHeight: 1.05,
             }}
           >
             Bond the outcome.
             <br />
-            <span style={{ color: "var(--stone-700)" }}>Keep the work private.</span>
+            <span style={{ color: "var(--bone-800)" }}>Keep the work private.</span>
           </h1>
 
           <p
             className="mb-10 leading-relaxed"
             style={{
               fontSize: "clamp(1.05rem, 1.5vw, 1.2rem)",
-              color: "var(--stone-700)",
+              color: "var(--bone-800)",
               maxWidth: "58ch",
             }}
           >
@@ -87,25 +134,25 @@ export default function Home() {
         {/* Settlement conservation strip */}
         <div
           className="mt-20 font-mono text-sm flex flex-wrap gap-x-8 gap-y-2 items-center"
-          style={{ color: "var(--stone-500)" }}
+          style={{ color: "var(--bone-600)" }}
         >
           <span>Bond at risk</span>
-          <span style={{ color: "var(--stone-400)" }}>+</span>
+          <span style={{ color: "var(--bone-400)" }}>+</span>
           <span>Stake in</span>
-          <span style={{ color: "var(--stone-400)" }}>=</span>
-          <span style={{ color: "var(--stone-950)", fontWeight: 600 }}>Stake out</span>
-          <span style={{ color: "var(--stone-400)" }}>+</span>
+          <span style={{ color: "var(--bone-400)" }}>=</span>
+          <span style={{ color: "var(--bone-950)", fontWeight: 600 }}>Stake out</span>
+          <span style={{ color: "var(--bone-400)" }}>+</span>
           <span>10% platform</span>
-          <span style={{ color: "var(--stone-400)" }}>+</span>
+          <span style={{ color: "var(--bone-400)" }}>+</span>
           <span>Winners</span>
           <span
             className="ml-auto hidden sm:inline text-xs"
             style={{
-              background: "var(--oxide-surface)",
-              color: "var(--oxide)",
+              background: "oklch(0.94 0.05 75)",
+              color: "var(--gold)",
               padding: "2px 8px",
               borderRadius: 4,
-              border: "1px solid var(--oxide-dim)",
+              border: "1px solid var(--gold-dim)",
             }}
           >
             conservation holds always
@@ -113,9 +160,12 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Rule ─────────────────────────────────────────────────────────────── */}
+      <hr style={{ border: "none", borderTop: "1px solid var(--bone-200)", margin: 0 }} />
+
       {/* ── Problem ──────────────────────────────────────────────────────────── */}
       <section
-        style={{ borderTop: "1px solid var(--stone-200)", background: "var(--stone-100)" }}
+        style={{ background: "var(--cream-deep)" }}
         aria-label="The problem"
       >
         <div
@@ -124,9 +174,10 @@ export default function Home() {
         >
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-12 lg:gap-20 items-start">
             <div>
+              <SectionMarker index="§ I" label="The dilemma" />
               <h2
                 className="font-bold tracking-tight leading-tight"
-                style={{ fontSize: "clamp(1.6rem, 2.5vw, 2rem)", color: "var(--stone-950)" }}
+                style={{ fontSize: "clamp(1.6rem, 2.5vw, 2rem)", color: "var(--bone-950)" }}
               >
                 The dilemma every operator faces
               </h2>
@@ -156,15 +207,12 @@ export default function Home() {
                 <li
                   key={n}
                   style={{
-                    borderTop: i === 0 ? "1px solid var(--stone-200)" : undefined,
-                    borderBottom: "1px solid var(--stone-200)",
+                    borderTop: i === 0 ? "1px solid var(--bone-200)" : undefined,
+                    borderBottom: "1px solid var(--bone-200)",
                     paddingTop: answer ? "1.75rem" : "1.25rem",
                     paddingBottom: answer ? "1.75rem" : "1.25rem",
-                    background: answer ? "var(--oxide-surface)" : "transparent",
-                    marginLeft: answer ? "-1.5rem" : 0,
-                    marginRight: answer ? "-1.5rem" : 0,
-                    paddingLeft: answer ? "1.5rem" : 0,
-                    paddingRight: answer ? "1.5rem" : 0,
+                    borderLeft: answer ? "3px solid var(--gold)" : undefined,
+                    paddingLeft: answer ? "1.25rem" : 0,
                   }}
                 >
                   <div className="flex gap-6 items-start">
@@ -172,7 +220,7 @@ export default function Home() {
                       className="font-mono font-semibold shrink-0"
                       style={{
                         fontSize: answer ? "1.1rem" : "0.75rem",
-                        color: answer ? "var(--oxide)" : "var(--stone-400)",
+                        color: answer ? "var(--gold)" : "var(--bone-400)",
                         letterSpacing: "0.04em",
                         lineHeight: 1.6,
                         minWidth: "2.5rem",
@@ -185,14 +233,14 @@ export default function Home() {
                         className="font-semibold mb-1"
                         style={{
                           fontSize: answer ? "1.1rem" : "0.95rem",
-                          color: answer ? "var(--stone-950)" : "var(--stone-700)",
+                          color: answer ? "var(--bone-950)" : "var(--bone-800)",
                         }}
                       >
                         {label}
                         {!answer && (
                           <span
                             className="ml-3 font-mono text-xs"
-                            style={{ color: "var(--stone-400)" }}
+                            style={{ color: "var(--bone-400)" }}
                           >
                             fails
                           </span>
@@ -201,8 +249,8 @@ export default function Home() {
                           <span
                             className="ml-3 font-mono text-xs"
                             style={{
-                              color: "var(--oxide)",
-                              background: "var(--oxide-dim)",
+                              color: "var(--gold)",
+                              background: "var(--gold-dim)",
                               padding: "1px 7px",
                               borderRadius: 3,
                             }}
@@ -215,7 +263,7 @@ export default function Home() {
                         className="leading-relaxed"
                         style={{
                           fontSize: answer ? "0.975rem" : "0.9rem",
-                          color: answer ? "var(--stone-700)" : "var(--stone-500)",
+                          color: answer ? "var(--bone-800)" : "var(--bone-600)",
                           maxWidth: "54ch",
                         }}
                       >
@@ -230,19 +278,22 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Rule ─────────────────────────────────────────────────────────────── */}
+      <hr style={{ border: "none", borderTop: "1px solid var(--bone-200)", margin: 0 }} />
+
       {/* ── How it works ─────────────────────────────────────────────────────── */}
       <section
         id="how-it-works"
-        style={{ borderTop: "1px solid var(--stone-200)" }}
         aria-label="How it works"
       >
         <div
           className="max-w-6xl mx-auto px-6"
           style={{ paddingTop: "clamp(3rem, 5vw, 5rem)", paddingBottom: "clamp(3rem, 5vw, 5rem)" }}
         >
+          <SectionMarker index="§ II" label="Lifecycle" />
           <h2
             className="font-bold tracking-tight mb-12"
-            style={{ fontSize: "clamp(1.4rem, 2vw, 1.75rem)", color: "var(--stone-950)" }}
+            style={{ fontSize: "clamp(1.4rem, 2vw, 1.75rem)", color: "var(--bone-950)" }}
           >
             How an oath lifecycle works
           </h2>
@@ -256,7 +307,7 @@ export default function Home() {
                 left: "5rem",
                 right: "5rem",
                 height: 1,
-                background: "var(--stone-200)",
+                background: "var(--bone-200)",
                 zIndex: 0,
               }}
               aria-hidden="true"
@@ -308,8 +359,8 @@ export default function Home() {
                     <div
                       className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-mono font-semibold"
                       style={{
-                        background: active ? "var(--oxide)" : "var(--stone-200)",
-                        color: active ? "oklch(0.98 0.003 50)" : "var(--stone-700)",
+                        background: active ? "var(--gold)" : "var(--bone-200)",
+                        color: active ? "oklch(0.99 0.005 85)" : "var(--bone-800)",
                         fontSize: "0.8rem",
                         position: "relative",
                         zIndex: 1,
@@ -320,13 +371,13 @@ export default function Home() {
                     <div>
                       <div
                         className="font-mono text-xs mb-0.5"
-                        style={{ color: "var(--stone-400)", letterSpacing: "0.05em" }}
+                        style={{ color: "var(--bone-400)", letterSpacing: "0.05em" }}
                       >
                         {role}
                       </div>
                       <div
                         className="font-semibold"
-                        style={{ fontSize: "0.95rem", color: "var(--stone-950)" }}
+                        style={{ fontSize: "0.95rem", color: "var(--bone-950)" }}
                       >
                         {action}
                       </div>
@@ -336,7 +387,7 @@ export default function Home() {
                     className="leading-relaxed"
                     style={{
                       fontSize: "0.85rem",
-                      color: "var(--stone-500)",
+                      color: "var(--bone-600)",
                       maxWidth: "30ch",
                     }}
                   >
@@ -349,9 +400,12 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Rule ─────────────────────────────────────────────────────────────── */}
+      <hr style={{ border: "none", borderTop: "1px solid var(--bone-200)", margin: 0 }} />
+
       {/* ── Five Roles ───────────────────────────────────────────────────────── */}
       <section
-        style={{ borderTop: "1px solid var(--stone-200)", background: "var(--stone-100)" }}
+        style={{ background: "var(--cream-deep)" }}
         aria-label="Five roles"
       >
         <div
@@ -360,15 +414,16 @@ export default function Home() {
         >
           <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-12 lg:gap-20">
             <div>
+              <SectionMarker index="§ III" label="Participants" />
               <h2
                 className="font-bold tracking-tight leading-tight"
-                style={{ fontSize: "clamp(1.4rem, 2vw, 1.75rem)", color: "var(--stone-950)" }}
+                style={{ fontSize: "clamp(1.4rem, 2vw, 1.75rem)", color: "var(--bone-950)" }}
               >
                 Five roles, one settlement
               </h2>
               <p
                 className="mt-4 leading-relaxed"
-                style={{ fontSize: "0.9rem", color: "var(--stone-500)", maxWidth: "30ch" }}
+                style={{ fontSize: "0.9rem", color: "var(--bone-600)", maxWidth: "30ch" }}
               >
                 Every oath involves all five. Settlement distributes to all in a
                 single on-chain transaction. Total in equals total out.
@@ -376,11 +431,11 @@ export default function Home() {
             </div>
 
             <div>
-              {/* Table header — visible only on lg+ where 3-col is rendered */}
+              {/* Table header */}
               <div
                 className="hidden lg:grid font-mono text-xs mb-2 gap-x-4 grid-cols-3"
                 style={{
-                  color: "var(--stone-400)",
+                  color: "var(--bone-400)",
                   letterSpacing: "0.07em",
                   textTransform: "uppercase",
                 }}
@@ -398,7 +453,7 @@ export default function Home() {
                   does: "Bonds capital against a multi-dimensional SLA commitment",
                   earns: "Bond returned + 20% of Doubter stakes (if Kept)",
                   risks: "Full bond loss (if Broken)",
-                  highlight: true,
+                  roleColor: "var(--gold)",
                 },
                 {
                   name: "Client",
@@ -406,7 +461,7 @@ export default function Home() {
                   does: "Registers an SLA claim against the Oathkeeper bond",
                   earns: "Bond claim + 20% of Believer stakes (if Broken)",
                   risks: "Nothing. No capital required",
-                  highlight: false,
+                  roleColor: "var(--steel)",
                 },
                 {
                   name: "Believer",
@@ -414,7 +469,7 @@ export default function Home() {
                   does: "Stakes capital in favor of the Oathkeeper keeping the oath",
                   earns: "70% of Doubter stakes, pro-rata (if Kept)",
                   risks: "Full stake loss (if Broken)",
-                  highlight: false,
+                  roleColor: "var(--sage)",
                 },
                 {
                   name: "Doubter",
@@ -422,7 +477,7 @@ export default function Home() {
                   does: "Stakes capital against the Oathkeeper keeping the oath",
                   earns: "70% of Believer stakes, pro-rata (if Broken)",
                   risks: "Full stake loss (if Kept)",
-                  highlight: false,
+                  roleColor: "var(--coral)",
                 },
                 {
                   name: "Platform",
@@ -430,19 +485,14 @@ export default function Home() {
                   does: "Provides the settlement infrastructure and verification layer",
                   earns: "10% of loser stakes on every settlement",
                   risks: "Nothing. Guaranteed fee regardless of outcome",
-                  highlight: false,
+                  roleColor: "var(--bone-400)",
                 },
-              ] as const).map(({ name, tag, does, earns, risks, highlight }) => (
+              ] as const).map(({ name, tag, does, earns, risks, roleColor }) => (
                 <div
                   key={name}
                   className="py-4"
                   style={{
-                    borderTop: "1px solid var(--stone-200)",
-                    background: highlight ? "var(--oxide-surface)" : "transparent",
-                    marginLeft: highlight ? "-1.5rem" : 0,
-                    marginRight: highlight ? "-1.5rem" : 0,
-                    paddingLeft: highlight ? "1.5rem" : 0,
-                    paddingRight: highlight ? "1.5rem" : 0,
+                    borderTop: "1px solid var(--bone-200)",
                   }}
                 >
                   {/* Role name row */}
@@ -451,30 +501,30 @@ export default function Home() {
                       className="font-semibold"
                       style={{
                         fontSize: "0.95rem",
-                        color: highlight ? "var(--oxide)" : "var(--stone-950)",
+                        color: roleColor,
                       }}
                     >
                       {name}
                     </span>
                     <span
                       className="font-mono text-xs ml-3"
-                      style={{ color: "var(--stone-400)" }}
+                      style={{ color: "var(--bone-400)" }}
                     >
                       {tag}
                     </span>
                   </div>
-                  {/* Details — stacked on mobile, 3-col on lg+ */}
+                  {/* Details */}
                   <div className="grid gap-3 lg:gap-x-4 lg:grid-cols-3">
-                    <p className="text-sm leading-snug" style={{ color: "var(--stone-600)" }}>
-                      <span className="font-mono text-xs block mb-0.5 lg:hidden" style={{ color: "var(--stone-400)" }}>DO</span>
+                    <p className="text-sm leading-snug" style={{ color: "var(--bone-600)" }}>
+                      <span className="font-mono text-xs block mb-0.5 lg:hidden" style={{ color: "var(--bone-400)" }}>DO</span>
                       {does}
                     </p>
-                    <p className="text-sm leading-snug" style={{ color: "var(--stone-700)" }}>
-                      <span className="font-mono text-xs block mb-0.5 lg:hidden" style={{ color: "var(--stone-400)" }}>EARN</span>
+                    <p className="text-sm leading-snug" style={{ color: "var(--bone-800)" }}>
+                      <span className="font-mono text-xs block mb-0.5 lg:hidden" style={{ color: "var(--bone-400)" }}>EARN</span>
                       {earns}
                     </p>
-                    <p className="text-sm leading-snug" style={{ color: "var(--stone-500)" }}>
-                      <span className="font-mono text-xs block mb-0.5 lg:hidden" style={{ color: "var(--stone-400)" }}>RISK</span>
+                    <p className="text-sm leading-snug" style={{ color: "var(--bone-600)" }}>
+                      <span className="font-mono text-xs block mb-0.5 lg:hidden" style={{ color: "var(--bone-400)" }}>RISK</span>
                       {risks}
                     </p>
                   </div>
@@ -486,25 +536,25 @@ export default function Home() {
                 <div
                   className="font-mono text-xs"
                   style={{
-                    color: "var(--stone-500)",
+                    color: "var(--bone-600)",
                     padding: "0.625rem 0.75rem",
-                    background: "var(--stone-200)",
+                    background: "var(--bone-200)",
                     borderRadius: 6,
                   }}
                 >
-                  <span style={{ color: "var(--oxide)", fontWeight: 600, marginRight: "1rem" }}>Kept:</span>
+                  <span style={{ color: "var(--gold)", fontWeight: 600, marginRight: "1rem" }}>Kept:</span>
                   Bond + Doubter stakes = Bond returned + 70% Believers + 20% Oathkeeper + 10% Platform
                 </div>
                 <div
                   className="font-mono text-xs"
                   style={{
-                    color: "var(--stone-500)",
+                    color: "var(--bone-600)",
                     padding: "0.625rem 0.75rem",
-                    background: "var(--stone-200)",
+                    background: "var(--bone-200)",
                     borderRadius: 6,
                   }}
                 >
-                  <span style={{ color: "var(--stone-700)", fontWeight: 600, marginRight: "1rem" }}>Broken:</span>
+                  <span style={{ color: "var(--coral)", fontWeight: 600, marginRight: "1rem" }}>Broken:</span>
                   Bond + Believer stakes = Client claim + 70% Doubters + 20% Client + 10% Platform
                 </div>
               </div>
@@ -513,19 +563,22 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Rule ─────────────────────────────────────────────────────────────── */}
+      <hr style={{ border: "none", borderTop: "1px solid var(--bone-200)", margin: 0 }} />
+
       {/* ── Three Verticals ──────────────────────────────────────────────────── */}
       <section
         id="verticals"
-        style={{ borderTop: "1px solid var(--stone-200)" }}
         aria-label="Verticals"
       >
         <div
           className="max-w-6xl mx-auto px-6"
           style={{ paddingTop: "clamp(3rem, 5vw, 5rem)", paddingBottom: "clamp(3rem, 5vw, 5rem)" }}
         >
+          <SectionMarker index="§ IV" label="Verticals" />
           <h2
             className="font-bold tracking-tight mb-10"
-            style={{ fontSize: "clamp(1.4rem, 2vw, 1.75rem)", color: "var(--stone-950)" }}
+            style={{ fontSize: "clamp(1.4rem, 2vw, 1.75rem)", color: "var(--bone-950)" }}
           >
             The work stays hidden. The outcome gets bonded.
           </h2>
@@ -566,10 +619,10 @@ export default function Home() {
               <div
                 key={name}
                 style={{
-                  border: "1px solid var(--stone-200)",
+                  border: "1px solid var(--bone-200)",
                   borderRadius: 10,
                   padding: "1.5rem",
-                  background: active ? "white" : "var(--stone-100)",
+                  background: active ? "var(--white)" : "var(--cream-deep)",
                   opacity: active ? 1 : 0.75,
                 }}
               >
@@ -578,7 +631,7 @@ export default function Home() {
                     <div
                       className="font-mono text-xs mb-1"
                       style={{
-                        color: active ? "var(--oxide)" : "var(--stone-400)",
+                        color: active ? "var(--gold)" : "var(--bone-400)",
                         letterSpacing: "0.08em",
                       }}
                     >
@@ -586,7 +639,7 @@ export default function Home() {
                     </div>
                     <div
                       className="font-semibold"
-                      style={{ fontSize: "1.05rem", color: "var(--stone-950)" }}
+                      style={{ fontSize: "1.05rem", color: "var(--bone-950)" }}
                     >
                       {name}
                     </div>
@@ -594,11 +647,11 @@ export default function Home() {
                   <span
                     className="font-mono text-xs shrink-0"
                     style={{
-                      color: "var(--stone-400)",
-                      background: "var(--stone-100)",
+                      color: "var(--bone-400)",
+                      background: "var(--cream-deep)",
                       padding: "2px 8px",
                       borderRadius: 4,
-                      border: "1px solid var(--stone-200)",
+                      border: "1px solid var(--bone-200)",
                     }}
                   >
                     {type}
@@ -609,11 +662,11 @@ export default function Home() {
                   <div>
                     <div
                       className="font-mono text-xs mb-1"
-                      style={{ color: "var(--stone-400)", letterSpacing: "0.05em" }}
+                      style={{ color: "var(--bone-400)", letterSpacing: "0.05em" }}
                     >
                       HIDDEN
                     </div>
-                    <p className="text-sm leading-snug" style={{ color: "var(--stone-500)" }}>
+                    <p className="text-sm leading-snug" style={{ color: "var(--bone-600)" }}>
                       {hidden}
                     </p>
                   </div>
@@ -621,7 +674,7 @@ export default function Home() {
                     <div
                       className="font-mono text-xs mb-1"
                       style={{
-                        color: active ? "var(--oxide)" : "var(--stone-400)",
+                        color: active ? "var(--gold)" : "var(--bone-400)",
                         letterSpacing: "0.05em",
                       }}
                     >
@@ -629,14 +682,14 @@ export default function Home() {
                     </div>
                     <p
                       className="text-sm font-medium leading-snug"
-                      style={{ color: active ? "var(--stone-950)" : "var(--stone-600)" }}
+                      style={{ color: active ? "var(--bone-950)" : "var(--bone-600)" }}
                     >
                       {bonded}
                     </p>
                   </div>
                 </div>
 
-                <p className="text-xs leading-relaxed" style={{ color: "var(--stone-400)" }}>
+                <p className="text-xs leading-relaxed" style={{ color: "var(--bone-400)" }}>
                   {detail}
                 </p>
               </div>
@@ -647,7 +700,7 @@ export default function Home() {
           <div className="flex flex-wrap gap-3 items-center">
             <span
               className="font-mono text-xs"
-              style={{ color: "var(--stone-400)", letterSpacing: "0.06em" }}
+              style={{ color: "var(--bone-400)", letterSpacing: "0.06em" }}
             >
               ROADMAP
             </span>
@@ -656,33 +709,37 @@ export default function Home() {
                 key={v}
                 className="font-mono text-xs px-3 py-1.5 rounded"
                 style={{
-                  color: "var(--stone-400)",
-                  border: "1px dashed var(--stone-200)",
-                  background: "var(--stone-50)",
+                  color: "var(--bone-400)",
+                  border: "1px dashed var(--bone-200)",
+                  background: "var(--cream)",
                 }}
               >
                 {v}
               </span>
             ))}
-            <span className="text-xs" style={{ color: "var(--stone-400)" }}>
+            <span className="text-xs" style={{ color: "var(--bone-400)" }}>
               Enum variants defined. Implementations in v2.
             </span>
           </div>
         </div>
       </section>
 
+      {/* ── Rule ─────────────────────────────────────────────────────────────── */}
+      <hr style={{ border: "none", borderTop: "1px solid var(--bone-200)", margin: 0 }} />
+
       {/* ── Built on Sui ─────────────────────────────────────────────────────── */}
       <section
-        style={{ borderTop: "1px solid var(--stone-200)", background: "var(--stone-100)" }}
+        style={{ background: "var(--cream-deep)" }}
         aria-label="Technology stack"
       >
         <div
           className="max-w-6xl mx-auto px-6"
           style={{ paddingTop: "clamp(3rem, 5vw, 5rem)", paddingBottom: "clamp(3rem, 5vw, 5rem)" }}
         >
+          <SectionMarker index="§ V" label="Stack" />
           <h2
             className="font-bold tracking-tight mb-10"
-            style={{ fontSize: "clamp(1.4rem, 2vw, 1.75rem)", color: "var(--stone-950)" }}
+            style={{ fontSize: "clamp(1.4rem, 2vw, 1.75rem)", color: "var(--bone-950)" }}
           >
             Built on Sui
           </h2>
@@ -714,8 +771,8 @@ export default function Home() {
                 <div
                   className="shrink-0 font-mono font-semibold text-sm px-3 py-1.5 rounded"
                   style={{
-                    background: "var(--stone-200)",
-                    color: "var(--stone-700)",
+                    background: "var(--bone-200)",
+                    color: "var(--bone-800)",
                     whiteSpace: "nowrap",
                     lineHeight: 1.4,
                   }}
@@ -725,13 +782,13 @@ export default function Home() {
                 <div>
                   <dt
                     className="font-mono text-xs mb-1"
-                    style={{ color: "var(--stone-400)", letterSpacing: "0.06em" }}
+                    style={{ color: "var(--bone-400)", letterSpacing: "0.06em" }}
                   >
                     {role.toUpperCase()}
                   </dt>
                   <dd
                     className="text-sm leading-relaxed"
-                    style={{ color: "var(--stone-600)", maxWidth: "44ch" }}
+                    style={{ color: "var(--bone-600)", maxWidth: "44ch" }}
                   >
                     {desc}
                   </dd>
@@ -744,7 +801,7 @@ export default function Home() {
 
       {/* ── CTA Footer ───────────────────────────────────────────────────────── */}
       <footer
-        style={{ borderTop: "1px solid var(--stone-200)", background: "var(--stone-950)" }}
+        style={{ background: "var(--bone-950)" }}
         aria-label="Call to action and footer"
       >
         <div
@@ -755,24 +812,31 @@ export default function Home() {
             <div>
               <div
                 className="font-mono text-xs mb-4"
-                style={{ color: "var(--oxide)", letterSpacing: "0.1em" }}
+                style={{ color: "var(--gold)" }}
               >
                 Sui Overflow 2026
               </div>
-              <h2
-                className="font-bold tracking-tight leading-tight mb-4"
-                style={{
-                  fontSize: "clamp(1.75rem, 3vw, 2.5rem)",
-                  color: "oklch(0.97 0.003 50)",
-                }}
+              <div className="flex items-center gap-3 mb-4">
+                <CompassMark size={28} />
+                <h2
+                  className="font-extrabold tracking-tight leading-tight"
+                  style={{
+                    fontSize: "clamp(1.75rem, 3vw, 2.5rem)",
+                    color: "var(--cream)",
+                  }}
+                >
+                  Oathkeeper.
+                </h2>
+              </div>
+              <p
+                className="font-semibold mb-2"
+                style={{ fontSize: "1rem", color: "var(--bone-400)" }}
               >
-                Oathkeeper.
-                <br />
-                <span style={{ color: "var(--stone-400)" }}>Onchain SLA infrastructure.</span>
-              </h2>
+                Onchain SLA infrastructure.
+              </p>
               <p
                 className="leading-relaxed"
-                style={{ fontSize: "0.95rem", color: "var(--stone-500)", maxWidth: "48ch" }}
+                style={{ fontSize: "0.95rem", color: "oklch(0.40 0.02 60)", maxWidth: "48ch" }}
               >
                 Bond capital. Keep the strategy private. Let open markets price
                 your reliability. Settle on-chain without arbitration.
@@ -791,7 +855,7 @@ export default function Home() {
                   </svg>
                 </a>
               </div>
-              <p className="font-mono text-xs" style={{ color: "var(--stone-600)" }}>
+              <p className="font-mono text-xs" style={{ color: "oklch(0.40 0.02 60)" }}>
                 DeFi and Payments track. Testnet deployed. MIT licensed.
               </p>
             </div>
@@ -799,12 +863,12 @@ export default function Home() {
 
           <div
             className="mt-16 pt-6 flex flex-wrap items-center justify-between gap-4"
-            style={{ borderTop: "1px solid var(--stone-800)" }}
+            style={{ borderTop: "1px solid oklch(0.25 0.02 60)" }}
           >
-            <span className="font-mono text-xs" style={{ color: "var(--stone-600)" }}>
+            <span className="font-mono text-xs" style={{ color: "oklch(0.40 0.02 60)" }}>
               Oathkeeper Protocol
             </span>
-            <span className="font-mono text-xs" style={{ color: "var(--stone-700)" }}>
+            <span className="font-mono text-xs" style={{ color: "oklch(0.30 0.02 60)" }}>
               Settlement is deterministic. Outcomes are neutral.
             </span>
           </div>
