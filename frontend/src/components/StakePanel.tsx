@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useCurrentAccount, useSignAndExecuteTransaction, useSuiClient } from "@mysten/dapp-kit";
 import { previewStake } from "@/lib/economics";
 import { usdc, bpsToPct } from "@/lib/format";
 import { SPLIT } from "@/lib/mock";
+import { buildStakeForPtb, buildStakeAgainstPtb } from "@/lib/ptb";
+import { explorerTx } from "@/lib/chain-config";
 
 /**
  * StakePanel — Believe / Doubt staking control with a derived payout preview.
@@ -13,25 +16,37 @@ import { SPLIT } from "@/lib/mock";
  * what you receive if the oath resolves your way, and that you lose your stake
  * if it resolves the other way.
  *
- * Client component: holds side toggle + amount input state. The onStake
- * callback is where a screen wires the actual transaction; absent here.
+ * Client component: holds side toggle + amount input state. Wires real
+ * transactions via dapp-kit when oathId + onchain are provided.
  */
 export default function StakePanel({
   believerPool,
   doubterPool,
+  oathId,
+  onchain,
   onStake,
   disabled = false,
 }: {
   believerPool: number;
   doubterPool: number;
-  /** Called with the chosen side + amount when the user commits. */
+  /** On-chain oath object id. Required for live staking. */
+  oathId?: string;
+  /** True when this oath exists on testnet and staking is enabled. */
+  onchain?: boolean;
+  /** Optional callback after a successful stake. */
   onStake?: (side: "Believer" | "Doubter", amount: number) => void;
   disabled?: boolean;
 }) {
+  const account = useCurrentAccount();
+  const client = useSuiClient();
+  const { mutate: signAndExecute, isPending: stakePending } = useSignAndExecuteTransaction();
+
   const [side, setSide] = useState<"Believer" | "Doubter">("Believer");
   const [amountStr, setAmountStr] = useState("");
+  const [stakeDigest, setStakeDigest] = useState<string | null>(null);
+  const [stakeError, setStakeError] = useState<string | null>(null);
 
-  const amount = Number.parseFloat(amountStr);
+  const amount = Math.trunc(Number.parseFloat(amountStr) || 0);
   const validAmount = Number.isFinite(amount) && amount > 0;
   const preview = previewStake(
     side,
@@ -39,6 +54,36 @@ export default function StakePanel({
     believerPool,
     doubterPool,
   );
+
+  const handleStake = () => {
+    if (!validAmount || !account || !oathId || !onchain || stakePending) return;
+    setStakeError(null);
+    setStakeDigest(null);
+
+    const tx =
+      side === "Believer"
+        ? buildStakeForPtb(oathId, BigInt(amount))
+        : buildStakeAgainstPtb(oathId, BigInt(amount));
+
+    signAndExecute(
+      { transaction: tx },
+      {
+        onSuccess: async ({ digest }) => {
+          await client.waitForTransaction({ digest });
+          setStakeDigest(digest);
+          onStake?.(side, amount);
+        },
+        onError: (err) => {
+          const msg = err instanceof Error ? err.message : String(err);
+          const hint =
+            msg.toLowerCase().includes("usdc") || msg.toLowerCase().includes("coin")
+              ? " Need test USDC? Use Get test USDC in the nav."
+              : "";
+          setStakeError(msg + hint);
+        },
+      },
+    );
+  };
 
   const sideColor = side === "Believer" ? "var(--sage-deep)" : "var(--coral-deep)";
   const oppositeOutcome = side === "Believer" ? "Broken" : "Kept";
@@ -182,18 +227,47 @@ export default function StakePanel({
         multiple.
       </p>
 
+      {stakeError && (
+        <p
+          className="text-xs mb-3"
+          style={{ color: "var(--coral-deep)" }}
+        >
+          {stakeError}
+        </p>
+      )}
+      {stakeDigest && (
+        <p className="font-mono text-xs mb-3" style={{ color: "var(--sage-deep)" }}>
+          Staked.{" "}
+          <a
+            href={explorerTx(stakeDigest)}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ textDecoration: "underline" }}
+          >
+            View tx ↗
+          </a>
+        </p>
+      )}
       <button
         type="button"
-        disabled={disabled || !validAmount}
-        onClick={() => validAmount && onStake?.(side, amount)}
+        disabled={disabled || !validAmount || !account || !onchain || stakePending}
+        onClick={handleStake}
         className="btn-primary w-full justify-center"
         style={{
-          opacity: disabled || !validAmount ? 0.5 : 1,
-          cursor: disabled || !validAmount ? "not-allowed" : "pointer",
+          opacity: disabled || !validAmount || !account || !onchain || stakePending ? 0.5 : 1,
+          cursor: disabled || !validAmount || !account || !onchain || stakePending ? "not-allowed" : "pointer",
           background: side === "Believer" ? "var(--sage-deep)" : undefined,
         }}
       >
-        {side === "Believer" ? "Stake as Believer" : "Stake as Doubter"}
+        {!account
+          ? "Connect wallet"
+          : !onchain
+          ? "Demo oath — staking disabled"
+          : stakePending
+          ? "Staking..."
+          : side === "Believer"
+          ? "Stake as Believer"
+          : "Stake as Doubter"}
       </button>
     </div>
   );

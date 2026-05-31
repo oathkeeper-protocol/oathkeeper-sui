@@ -1,13 +1,13 @@
 {
   "network": "testnet",
-  "packageId": "0x63fad2aef83fe2f05ffbb5f44df10b14c5343e0bffc70dd84ebd1682c361f304",
-  "coinType": "0x63fad2aef83fe2f05ffbb5f44df10b14c5343e0bffc70dd84ebd1682c361f304::usdc::USDC",
+  "packageId": "0xa4c2f835f0abf70cf6ba095d7244a1ca8c8a1df7189b6a692517e32727ee267d",
+  "coinType": "0xa4c2f835f0abf70cf6ba095d7244a1ca8c8a1df7189b6a692517e32727ee267d::usdc::USDC",
   "oaths": [
     {
-      "oathId": "0xc589a411ad2d0e8e7fd920ce35758d0b3c8ff4cc707f05cf3318bfbdab204bc2",
-      "promiser": "0x8ac0bef9ef8d05b33d8fff77c3d43b20dab6e501358fc79cd126503b79cadf1a",
-      "promiserAlias": "OP-8AC0",
-      "client": "0xb6bfa60f810d01c8c576c20ce27cf7e19c381bc01e62bce1a57ae8fb649d1e0b",
+      "oathId": "0xec9efdb02c94e4ba03ade203763a41ffb910b3d71b80fd74a024f94921fd6349",
+      "promiser": "0xf99184e49201a48d74a704d7c403446801780d9dd42957a7d84cb307c39bf633",
+      "promiserAlias": "OP-F991",
+      "client": "0x6edb3fb5aaf67016cb1de55afb672ae4f36e06789c9114d58bf9afe6704a0555",
       "oathType": "TradingOath",
       "bondAmount": 50000,
       "clientClaim": 20000,
@@ -24,7 +24,7 @@
       "startingEquity": 100000,
       "tradeCount": 0,
       "cumulativeVolume": 0,
-      "epochEndMs": 1780841204920,
+      "epochEndMs": 1780842858204,
       "status": "Active",
       "standing": {
         "kept": 0,
@@ -37,13 +37,13 @@
       ],
       "attestations": [],
       "onchain": true,
-      "explorerUrl": "https://suiscan.xyz/testnet/object/0xc589a411ad2d0e8e7fd920ce35758d0b3c8ff4cc707f05cf3318bfbdab204bc2"
+      "explorerUrl": "https://suiscan.xyz/testnet/object/0xec9efdb02c94e4ba03ade203763a41ffb910b3d71b80fd74a024f94921fd6349"
     },
     {
-      "oathId": "0x059f90a9eccf77f97a5ee1a1479b24df0ccc3d38930da91e6c9182a5896edb56",
-      "promiser": "0x8ac0bef9ef8d05b33d8fff77c3d43b20dab6e501358fc79cd126503b79cadf1a",
-      "promiserAlias": "OP-8AC0",
-      "client": "0xb6bfa60f810d01c8c576c20ce27cf7e19c381bc01e62bce1a57ae8fb649d1e0b",
+      "oathId": "0x11a449f906ea9da04c06e68119ea4c92564272dafd7e832bcfd6b236b80cf01a",
+      "promiser": "0xf99184e49201a48d74a704d7c403446801780d9dd42957a7d84cb307c39bf633",
+      "promiserAlias": "OP-F991",
+      "client": "0x6edb3fb5aaf67016cb1de55afb672ae4f36e06789c9114d58bf9afe6704a0555",
       "oathType": "TradingOath",
       "bondAmount": 25000,
       "clientClaim": 12000,
@@ -60,7 +60,7 @@
       "startingEquity": 100000,
       "tradeCount": 0,
       "cumulativeVolume": 0,
-      "epochEndMs": 1780841169185,
+      "epochEndMs": 1780842814987,
       "status": "Active",
       "standing": {
         "kept": 0,
@@ -71,13 +71,47 @@
       ],
       "attestations": [],
       "onchain": true,
-      "explorerUrl": "https://suiscan.xyz/testnet/object/0x059f90a9eccf77f97a5ee1a1479b24df0ccc3d38930da91e6c9182a5896edb56"
+      "explorerUrl": "https://suiscan.xyz/testnet/object/0x11a449f906ea9da04c06e68119ea4c92564272dafd7e832bcfd6b236b80cf01a"
     },
     {
-      "oathId": "0xc90725ccefe0204aa93665a60b58d93bda16ebe2907aef5cd0c0f7edffa96446",
-      "promiser": "0x8ac0bef9ef8d05b33d8fff77c3d43b20dab6e501358fc79cd126503b79cadf1a",
-      "promiserAlias": "OP-8AC0",
-      "client": "0xb6bfa60f810d01c8c576c20ce27cf7e19c381bc01e62bce1a57ae8fb649d1e0b",
+      "oathId": "0xa5d4e79e3e4444c3ef102802a96be1e32628195b9e152f7b9cdfdd35a7c81220",
+      "promiser": "0xbdd33c282c02edbfea2f00b707c0db65a2a67df985c425b0411374dab76390b9",
+      "promiserAlias": "OP-BDD3",
+      "client": "0x6c3025f12c60b5b76bd7429b21a949719687d61a0ff6686c968700db111006d0",
+      "oathType": "TradingOath",
+      "bondAmount": 25000,
+      "clientClaim": 12000,
+      "clientClaimText": "Holds drawdown at or under 15%, at least 20 trades, at least 8% net PnL on BTC-PERP this epoch.",
+      "dims": {
+        "maxDrawdownBps": 1500,
+        "minTrades": 20,
+        "minPnlBps": 800,
+        "minVolumeUsdc": 50000
+      },
+      "totalBelieverStakes": 4200,
+      "totalDoubterStakes": 1800,
+      "currentEquity": 100000,
+      "startingEquity": 100000,
+      "tradeCount": 0,
+      "cumulativeVolume": 0,
+      "epochEndMs": 1780842726656,
+      "status": "Active",
+      "standing": {
+        "kept": 0,
+        "broken": 0
+      },
+      "assets": [
+        "BTC-PERP"
+      ],
+      "attestations": [],
+      "onchain": true,
+      "explorerUrl": "https://suiscan.xyz/testnet/object/0xa5d4e79e3e4444c3ef102802a96be1e32628195b9e152f7b9cdfdd35a7c81220"
+    },
+    {
+      "oathId": "0x1b856df9a67964db897ff9ed9c73c2fa1f6b8590e75e4e85c5295734af644d95",
+      "promiser": "0xf99184e49201a48d74a704d7c403446801780d9dd42957a7d84cb307c39bf633",
+      "promiserAlias": "OP-F991",
+      "client": "0x6edb3fb5aaf67016cb1de55afb672ae4f36e06789c9114d58bf9afe6704a0555",
       "oathType": "TradingOath",
       "bondAmount": 10000,
       "clientClaim": 5000,
@@ -94,7 +128,7 @@
       "startingEquity": 100000,
       "tradeCount": 0,
       "cumulativeVolume": 0,
-      "epochEndMs": 1780495587379,
+      "epochEndMs": 1780497237649,
       "status": "Active",
       "standing": {
         "kept": 0,
@@ -106,13 +140,48 @@
       ],
       "attestations": [],
       "onchain": true,
-      "explorerUrl": "https://suiscan.xyz/testnet/object/0xc90725ccefe0204aa93665a60b58d93bda16ebe2907aef5cd0c0f7edffa96446"
+      "explorerUrl": "https://suiscan.xyz/testnet/object/0x1b856df9a67964db897ff9ed9c73c2fa1f6b8590e75e4e85c5295734af644d95"
     },
     {
-      "oathId": "0xf0d73bb6aa6a1803b2396614f4e2456793584b0ff418584e113b9907f4aec524",
-      "promiser": "0x8ac0bef9ef8d05b33d8fff77c3d43b20dab6e501358fc79cd126503b79cadf1a",
-      "promiserAlias": "OP-8AC0",
-      "client": "0xb6bfa60f810d01c8c576c20ce27cf7e19c381bc01e62bce1a57ae8fb649d1e0b",
+      "oathId": "0xdc30df825ad4b45976b7cd62b42c31608a79db1bbde75a4adebbe4b234fac101",
+      "promiser": "0xbdd33c282c02edbfea2f00b707c0db65a2a67df985c425b0411374dab76390b9",
+      "promiserAlias": "OP-BDD3",
+      "client": "0x6c3025f12c60b5b76bd7429b21a949719687d61a0ff6686c968700db111006d0",
+      "oathType": "TradingOath",
+      "bondAmount": 10000,
+      "clientClaim": 5000,
+      "clientClaimText": "Holds drawdown at or under 25%, at least 10 trades, at least 4% net PnL on ETH-PERP/BTC-PERP this epoch.",
+      "dims": {
+        "maxDrawdownBps": 2500,
+        "minTrades": 10,
+        "minPnlBps": 400,
+        "minVolumeUsdc": 0
+      },
+      "totalBelieverStakes": 0,
+      "totalDoubterStakes": 0,
+      "currentEquity": 100000,
+      "startingEquity": 100000,
+      "tradeCount": 0,
+      "cumulativeVolume": 0,
+      "epochEndMs": 1780497150638,
+      "status": "Active",
+      "standing": {
+        "kept": 0,
+        "broken": 0
+      },
+      "assets": [
+        "ETH-PERP",
+        "BTC-PERP"
+      ],
+      "attestations": [],
+      "onchain": true,
+      "explorerUrl": "https://suiscan.xyz/testnet/object/0xdc30df825ad4b45976b7cd62b42c31608a79db1bbde75a4adebbe4b234fac101"
+    },
+    {
+      "oathId": "0xbd35ed9b91ad87c71ac3b516c0c374bc7d5586320bf88512daddc354cd9ecdf9",
+      "promiser": "0xf99184e49201a48d74a704d7c403446801780d9dd42957a7d84cb307c39bf633",
+      "promiserAlias": "OP-F991",
+      "client": "0x6edb3fb5aaf67016cb1de55afb672ae4f36e06789c9114d58bf9afe6704a0555",
       "oathType": "TradingOath",
       "bondAmount": 8000,
       "clientClaim": 6000,
@@ -129,7 +198,7 @@
       "startingEquity": 100000,
       "tradeCount": 0,
       "cumulativeVolume": 0,
-      "epochEndMs": 1780322819212,
+      "epochEndMs": 1780324477368,
       "status": "Active",
       "standing": {
         "kept": 0,
@@ -140,78 +209,7 @@
       ],
       "attestations": [],
       "onchain": true,
-      "explorerUrl": "https://suiscan.xyz/testnet/object/0xf0d73bb6aa6a1803b2396614f4e2456793584b0ff418584e113b9907f4aec524"
-    },
-    {
-      "oathId": "0xc18f2ee25cf805049c5068cfb04d0734e0e41301d2c2c1876d202af9adbb465a",
-      "promiser": "0x38ba42423170a9729bfe92c1240e3891ef0b33411396a66fe1db921a9069cb36",
-      "promiserAlias": "OP-38BA",
-      "client": "0x1a732e5a8e5a1371fd1956f8fcdba733d70652b64a9dbd6dfbbe996e694620a8",
-      "oathType": "TradingOath",
-      "bondAmount": 0,
-      "clientClaim": 5000,
-      "clientClaimText": "Holds drawdown at or under 20%, at least 10 trades, at least 5% net PnL on BTC/ETH this epoch.",
-      "dims": {
-        "maxDrawdownBps": 2000,
-        "minTrades": 10,
-        "minPnlBps": 500,
-        "minVolumeUsdc": 0
-      },
-      "totalBelieverStakes": 2000,
-      "totalDoubterStakes": 1500,
-      "currentEquity": 100000,
-      "startingEquity": 100000,
-      "tradeCount": 0,
-      "cumulativeVolume": 0,
-      "epochEndMs": 1780234451093,
-      "status": "Settled",
-      "breachReason": "MinTrades",
-      "standing": {
-        "kept": 0,
-        "broken": 0
-      },
-      "assets": [
-        "BTC",
-        "ETH"
-      ],
-      "attestations": [],
-      "onchain": true,
-      "explorerUrl": "https://suiscan.xyz/testnet/object/0xc18f2ee25cf805049c5068cfb04d0734e0e41301d2c2c1876d202af9adbb465a"
-    },
-    {
-      "oathId": "0x3192a812563fd8bcbf984ff7fba045965e866b2c8bac9fb3b0ca625ba0a4aa5b",
-      "promiser": "0x6df9ae0460659d587c0b3089fd0544b23cab045e84676dc765e2fc27eab98e17",
-      "promiserAlias": "OP-6DF9",
-      "client": "0x14d80ac1d21ff72433a94540dfefcb251ed9839929e93f985586c250fe3d2376",
-      "oathType": "TradingOath",
-      "bondAmount": 0,
-      "clientClaim": 5000,
-      "clientClaimText": "Holds drawdown at or under 20%, at least 10 trades, at least 5% net PnL on BTC/ETH this epoch.",
-      "dims": {
-        "maxDrawdownBps": 2000,
-        "minTrades": 10,
-        "minPnlBps": 500,
-        "minVolumeUsdc": 0
-      },
-      "totalBelieverStakes": 2000,
-      "totalDoubterStakes": 1500,
-      "currentEquity": 110000,
-      "startingEquity": 100000,
-      "tradeCount": 10,
-      "cumulativeVolume": 10000,
-      "epochEndMs": 1780230007477,
-      "status": "Settled",
-      "standing": {
-        "kept": 0,
-        "broken": 0
-      },
-      "assets": [
-        "BTC",
-        "ETH"
-      ],
-      "attestations": [],
-      "onchain": true,
-      "explorerUrl": "https://suiscan.xyz/testnet/object/0x3192a812563fd8bcbf984ff7fba045965e866b2c8bac9fb3b0ca625ba0a4aa5b"
+      "explorerUrl": "https://suiscan.xyz/testnet/object/0xbd35ed9b91ad87c71ac3b516c0c374bc7d5586320bf88512daddc354cd9ecdf9"
     }
   ]
 }

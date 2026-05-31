@@ -2,8 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ConnectButton } from "@mysten/dapp-kit";
+import { ConnectButton, useCurrentAccount, useSuiClientQuery, useSignAndExecuteTransaction, useSuiClient } from "@mysten/dapp-kit";
 import CompassMark from "./CompassMark";
+import { USDC_TYPE } from "@/lib/chain-config";
+import { buildFaucetPtb } from "@/lib/ptb";
+import { usdc } from "@/lib/format";
 
 const LINKS = [
   { href: "/oaths", label: "Browse" },
@@ -23,6 +26,31 @@ const LINKS = [
  */
 export default function AppNav() {
   const pathname = usePathname();
+  const account = useCurrentAccount();
+  const client = useSuiClient();
+  const { mutate: signAndExecute, isPending: faucetPending } = useSignAndExecuteTransaction();
+
+  const { data: balanceData, refetch: refetchBalance } = useSuiClientQuery(
+    "getBalance",
+    { owner: account?.address as string, coinType: USDC_TYPE },
+    { enabled: !!account },
+  );
+
+  const usdcBalance = balanceData ? usdc(Number(balanceData.totalBalance)) : null;
+
+  const handleFaucet = () => {
+    if (faucetPending) return;
+    const tx = buildFaucetPtb();
+    signAndExecute(
+      { transaction: tx },
+      {
+        onSuccess: async ({ digest }) => {
+          await client.waitForTransaction({ digest });
+          refetchBalance();
+        },
+      },
+    );
+  };
 
   return (
     <nav
@@ -84,8 +112,34 @@ export default function AppNav() {
           })}
         </div>
 
-        {/* Right: wallet connect */}
-        <div className="flex items-center">
+        {/* Right: USDC balance + faucet + wallet connect */}
+        <div className="flex items-center gap-2">
+          {account && (
+            <>
+              {usdcBalance !== null && (
+                <span
+                  className="font-mono tabular-nums hidden sm:block"
+                  style={{ fontSize: "0.75rem", color: "var(--bone-800)" }}
+                >
+                  {usdcBalance} USDC
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={handleFaucet}
+                disabled={faucetPending}
+                className="btn-secondary"
+                style={{
+                  fontSize: "0.72rem",
+                  padding: "4px 10px",
+                  opacity: faucetPending ? 0.6 : 1,
+                  cursor: faucetPending ? "not-allowed" : "pointer",
+                }}
+              >
+                {faucetPending ? "Minting..." : "Get test USDC"}
+              </button>
+            </>
+          )}
           <ConnectButton connectText="Connect Wallet" />
         </div>
       </div>

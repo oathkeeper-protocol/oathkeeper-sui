@@ -13,16 +13,16 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useCurrentAccount } from "@mysten/dapp-kit";
+import { useCurrentAccount, useSignAndExecuteTransaction, useSuiClient, useSuiClientQuery } from "@mysten/dapp-kit";
 
 import RoleBadge from "@/components/RoleBadge";
 import DimChips from "@/components/DimChips";
 import { SPLIT, type OathTypeVariant, type OathDims } from "@/lib/mock";
 import { usdc, bpsToPct, addr } from "@/lib/format";
+import { buildMintOathPtb, type MintArgs } from "@/lib/ptb";
+import { CHAIN, explorerObject, explorerTx } from "@/lib/chain-config";
 
 // ─── Static config ───────────────────────────────────────────────
-// Demo balance — clearly local, NOT dressed as live on-chain data.
-const DEMO_BALANCE = 24_500;
 
 const VERTICALS: {
   key: OathTypeVariant;
@@ -56,6 +56,8 @@ const MINT_STEPS = [
 
 export default function MintPage() {
   const account = useCurrentAccount();
+  const client = useSuiClient();
+  const { mutate: signAndExecute } = useSignAndExecuteTransaction();
 
   // Form state — aggressive, sensible defaults.
   const [vertical, setVertical] = useState<OathTypeVariant>("TradingOath");
@@ -74,12 +76,23 @@ export default function MintPage() {
   // Mint flow.
   const [minting, setMinting] = useState(false);
   const [mintStep, setMintStep] = useState(-1);
+  const [mintedOathId, setMintedOathId] = useState<string | null>(null);
+  const [mintDigest, setMintDigest] = useState<string | null>(null);
+  const [mintError, setMintError] = useState<string | null>(null);
+
+  // USDC balance for the bond box.
+  const { data: balanceData } = useSuiClientQuery(
+    "getBalance",
+    { owner: account?.address as string, coinType: `${CHAIN.packageId}::usdc::USDC` },
+    { enabled: !!account },
+  );
+  const liveBalance = balanceData ? Number(balanceData.totalBalance) : null;
 
   const isTrading = vertical === "TradingOath";
 
-  // Derived numbers.
-  const bond = Number.parseFloat(bondStr) || 0;
-  const clientClaim = Number.parseFloat(clientClaimStr) || 0;
+  // Derived numbers — whole integers only (BigInt cannot handle decimals).
+  const bond = Math.trunc(Number.parseFloat(bondStr) || 0);
+  const clientClaim = Math.trunc(Number.parseFloat(clientClaimStr) || 0);
 
   // Live oath-tuple preview, decoded into on-chain units for DimChips.
   const dims: OathDims = useMemo(
@@ -101,7 +114,8 @@ export default function MintPage() {
   const tradesValid = minTrades >= 1; // contract rejects min_trades < 1
   const assetsValid = !isTrading || assets.length >= 1;
   const bondValid = bond > 0;
-  const claimAddrValid = clientAddr.trim().length >= 3;
+  // Require a valid 0x Sui address: 0x + 64 hex chars.
+  const claimAddrValid = /^0x[0-9a-fA-F]{64}$/.test(clientAddr.trim());
 
   const formValid =
     bondValid &&
@@ -120,28 +134,79 @@ export default function MintPage() {
           ? "Set a bond first."
           : null;
 
+  // Inline error for the client address field.
+  const addrError =
+    clientAddr.trim().length > 0 && !claimAddrValid
+      ? "Must be a full 0x Sui address (66 chars)."
+      : null;
+
   const toggleAsset = (a: string) =>
     setAssets((prev) =>
       prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a],
     );
 
+  const epochMs = EPOCHS.find((e) => e.label === epoch)?.ms ?? EPOCHS[2].ms;
+
   const startMint = () => {
-    if (!formValid) return;
+    if (!formValid || !account) return;
     setMinting(true);
     setMintStep(0);
-    const durations = [800, 1100, 800, 900, 600];
-    let i = 0;
-    const tick = () => {
-      i += 1;
-      if (i < MINT_STEPS.length) {
-        setMintStep(i);
-        setTimeout(tick, durations[i]);
-      }
+    setMintError(null);
+
+    const args: MintArgs = {
+      maxDrawdownBps: dims.maxDrawdownBps,
+      minTrades: dims.minTrades,
+      minPnlBps: dims.minPnlBps,
+      minVolumeUsdc: dims.minVolumeUsdc,
+      execAddr: account.address,
+      venue: 1, // Hyperliquid pass-through (no real sig needed on testnet)
+      allowedAssets: isTrading ? assets : [],
+      epochDurationMs: epochMs,
+      bond: BigInt(bond),
+      client: clientAddr.trim(),
+      clientClaim: BigInt(clientClaim),
+      sealedRoot: oathText.trim() || "Oathkeeper testnet oath",
+      bindingNonce: BigInt(Date.now()),
+      startingEquityUsdc: BigInt(100_000),
     };
-    setTimeout(tick, durations[0]);
+
+    const tx = buildMintOathPtb(args);
+
+    signAndExecute(
+      { transaction: tx },
+      {
+        onSuccess: async ({ digest }) => {
+          setMintStep(MINT_STEPS.length - 1);
+          try {
+            const res = await client.waitForTransaction({
+              digest,
+              options: { showEvents: true, showEffects: true },
+            });
+            const ev = res.events?.find((e) =>
+              e.type.endsWith("::oath::OathMinted"),
+            );
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const oathId = (ev?.parsedJson as any)?.oath_id as string | undefined;
+            setMintedOathId(oathId ?? null);
+            setMintDigest(digest);
+          } catch {
+            setMintDigest(digest);
+          }
+        },
+        onError: (err) => {
+          setMinting(false);
+          setMintStep(-1);
+          const msg = err instanceof Error ? err.message : String(err);
+          const hint = msg.toLowerCase().includes("usdc") || msg.toLowerCase().includes("coin")
+            ? " Need test USDC? Use Get test USDC in the nav."
+            : "";
+          setMintError(msg + hint);
+        },
+      },
+    );
   };
 
-  const done = minStepIsDone(mintStep);
+  const done = mintedOathId !== null || mintDigest !== null;
 
   return (
     <div className="mx-auto max-w-[640px] px-4 sm:px-6 pb-24">
@@ -308,6 +373,11 @@ export default function MintPage() {
             </span>
           )}
         </div>
+        {addrError && (
+          <p className="mt-1 text-xs" style={{ color: "var(--coral-deep)" }}>
+            {addrError}
+          </p>
+        )}
 
         <div className="flex items-baseline justify-between mb-1.5">
           <FieldLabel inline>Claim against bond</FieldLabel>
@@ -404,7 +474,7 @@ export default function MintPage() {
         {isTrading ? (
           <>
             <FieldLabel>Venue</FieldLabel>
-            <div className="flex gap-2 mb-4">
+            <div className="flex gap-2 mb-2">
               {(["DeepBook", "Hyperliquid"] as const).map((v) => {
                 const active = venue === v;
                 return (
@@ -428,6 +498,9 @@ export default function MintPage() {
                 );
               })}
             </div>
+            <p className="font-mono mb-4" style={{ fontSize: "0.6rem", color: "var(--bone-600)" }}>
+              Binding uses the pass-through path on testnet (venue=1). No real exec signature required.
+            </p>
 
             <FieldLabel>Allowed assets</FieldLabel>
             <div className="flex flex-wrap gap-2 mb-1.5">
@@ -539,7 +612,9 @@ export default function MintPage() {
                 {usdc(Number(q))}
               </QuickChip>
             ))}
-            <QuickChip onClick={() => setBondStr(String(DEMO_BALANCE))}>max</QuickChip>
+            {liveBalance !== null && (
+              <QuickChip onClick={() => setBondStr(String(liveBalance))}>max</QuickChip>
+            )}
           </div>
         </div>
 
@@ -555,7 +630,7 @@ export default function MintPage() {
           <Row>
             <span style={{ color: "var(--bone-600)" }}>Balance</span>
             <span className="tabular-nums" style={{ color: "var(--bone-800)" }}>
-              {usdc(DEMO_BALANCE)} USDC
+              {liveBalance !== null ? `${usdc(liveBalance)} USDC` : account ? "loading..." : "connect wallet"}
             </span>
           </Row>
           <Row>
@@ -582,20 +657,28 @@ export default function MintPage() {
       </Section>
 
       {/* CTA / progress strip */}
+      {mintError && (
+        <div
+          className="mt-6 px-4 py-3 rounded-md text-sm"
+          style={{ background: "var(--coral-pale, #fef2f2)", color: "var(--coral-deep)", border: "1px solid var(--coral)" }}
+        >
+          {mintError}
+        </div>
+      )}
       {!minting ? (
         <button
           type="button"
           onClick={startMint}
-          disabled={!formValid}
+          disabled={!formValid || !account}
           className="btn-primary w-full justify-center mt-8"
           style={{
             padding: "0.9rem 1.5rem",
             fontSize: "0.95rem",
-            opacity: formValid ? 1 : 0.5,
-            cursor: formValid ? "pointer" : "not-allowed",
+            opacity: formValid && account ? 1 : 0.5,
+            cursor: formValid && account ? "pointer" : "not-allowed",
           }}
         >
-          Mint oath
+          {!account ? "Connect wallet to mint" : "Mint oath"}
           <span className="font-mono" aria-hidden="true">
             →
           </span>
@@ -639,22 +722,61 @@ export default function MintPage() {
           </ol>
           {done && (
             <div
-              className="mt-4 pt-4 text-center"
+              className="mt-4 pt-4"
               style={{ borderTop: "1px solid var(--bone-200)" }}
             >
-              <span
-                className="text-sm font-semibold"
+              <p
+                className="text-sm font-semibold mb-3"
                 style={{ color: "var(--sage-deep)" }}
               >
                 Oath minted and shared.
-              </span>
-              <Link
-                href="/oaths"
-                className="btn-secondary mt-3 inline-flex"
-                style={{ fontSize: "0.85rem" }}
-              >
-                View in the market →
-              </Link>
+              </p>
+              <div className="flex flex-col gap-2 font-mono" style={{ fontSize: "0.7rem", color: "var(--bone-600)" }}>
+                {mintedOathId && (
+                  <span>
+                    Oath:{" "}
+                    <a
+                      href={explorerObject(mintedOathId)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: "var(--sage-deep)", textDecoration: "underline" }}
+                    >
+                      {mintedOathId.slice(0, 10)}...{mintedOathId.slice(-6)} ↗
+                    </a>
+                  </span>
+                )}
+                {mintDigest && (
+                  <span>
+                    Tx:{" "}
+                    <a
+                      href={explorerTx(mintDigest)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: "var(--sage-deep)", textDecoration: "underline" }}
+                    >
+                      {mintDigest.slice(0, 10)}...{mintDigest.slice(-6)} ↗
+                    </a>
+                  </span>
+                )}
+              </div>
+              <div className="flex gap-3 mt-4 flex-wrap">
+                {mintedOathId && (
+                  <Link
+                    href={`/oaths/${mintedOathId}`}
+                    className="btn-primary"
+                    style={{ fontSize: "0.85rem" }}
+                  >
+                    View oath →
+                  </Link>
+                )}
+                <Link
+                  href="/oaths"
+                  className="btn-secondary"
+                  style={{ fontSize: "0.85rem" }}
+                >
+                  Browse market →
+                </Link>
+              </div>
             </div>
           )}
         </div>

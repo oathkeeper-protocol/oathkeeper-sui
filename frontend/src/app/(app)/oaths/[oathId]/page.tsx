@@ -518,6 +518,8 @@ export default async function OathDetailPage({
               <StakePanel
                 believerPool={oath.totalBelieverStakes}
                 doubterPool={oath.totalDoubterStakes}
+                oathId={oath.oathId}
+                onchain={oath.onchain}
               />
             </div>
           )}
