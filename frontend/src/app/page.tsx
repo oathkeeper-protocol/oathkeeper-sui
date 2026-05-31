@@ -35,7 +35,7 @@ function SectionMarker({ index, label }: { index: string; label?: string }) {
       {label && (
         <>
           <span style={{ color: "var(--bone-300)" }}>·</span>
-          <span style={{ color: "var(--bone-400)" }}>{label}</span>
+          <span style={{ color: "var(--bone-600)" }}>{label}</span>
         </>
       )}
     </div>
@@ -296,7 +296,7 @@ export default function Home() {
                     Settles in{" "}
                     <span style={{ color: "var(--gold-deep)", fontWeight: 600 }}>02:14:00</span>
                   </span>
-                  <span style={{ color: "var(--bone-400)" }}>Sealed &middot; Walrus</span>
+                  <span style={{ color: "var(--bone-600)" }}>Sealed &middot; Walrus</span>
                 </div>
 
                 {/* 8. CTA */}
@@ -332,13 +332,13 @@ export default function Home() {
           style={{ color: "var(--bone-600)" }}
         >
           <span>Bond at risk</span>
-          <span style={{ color: "var(--bone-400)" }}>+</span>
+          <span style={{ color: "var(--bone-600)" }}>+</span>
           <span>Stake in</span>
-          <span style={{ color: "var(--bone-400)" }}>=</span>
+          <span style={{ color: "var(--bone-600)" }}>=</span>
           <span style={{ color: "var(--bone-950)", fontWeight: 600 }}>Stake out</span>
-          <span style={{ color: "var(--bone-400)" }}>+</span>
+          <span style={{ color: "var(--bone-600)" }}>+</span>
           <span>10% platform</span>
-          <span style={{ color: "var(--bone-400)" }}>+</span>
+          <span style={{ color: "var(--bone-600)" }}>+</span>
           <span>Winners</span>
           <span
             className="ml-auto hidden sm:inline text-xs"
@@ -421,7 +421,7 @@ export default function Home() {
                       className="font-mono font-semibold shrink-0"
                       style={{
                         fontSize: answer ? "1.1rem" : "0.75rem",
-                        color: answer ? "var(--gold)" : "var(--bone-400)",
+                        color: answer ? "var(--gold)" : "var(--bone-600)",
                         letterSpacing: "0.04em",
                         lineHeight: 1.6,
                         minWidth: "2.5rem",
@@ -441,7 +441,7 @@ export default function Home() {
                         {!answer && (
                           <span
                             className="ml-3 font-mono text-xs"
-                            style={{ color: "var(--bone-400)" }}
+                            style={{ color: "var(--bone-600)" }}
                           >
                             fails
                           </span>
@@ -572,7 +572,7 @@ export default function Home() {
                     <div>
                       <div
                         className="font-mono text-xs mb-0.5"
-                        style={{ color: "var(--bone-400)", letterSpacing: "0.05em" }}
+                        style={{ color: "var(--bone-600)", letterSpacing: "0.05em" }}
                       >
                         {role}
                       </div>
@@ -636,7 +636,7 @@ export default function Home() {
               <div
                 className="hidden lg:grid font-mono text-xs mb-2 gap-x-4 grid-cols-3"
                 style={{
-                  color: "var(--bone-400)",
+                  color: "var(--bone-600)",
                   letterSpacing: "0.07em",
                   textTransform: "uppercase",
                 }}
@@ -709,7 +709,7 @@ export default function Home() {
                     </span>
                     <span
                       className="font-mono text-xs ml-3"
-                      style={{ color: "var(--bone-400)" }}
+                      style={{ color: "var(--bone-600)" }}
                     >
                       {tag}
                     </span>
@@ -717,15 +717,15 @@ export default function Home() {
                   {/* Details */}
                   <div className="grid gap-3 lg:gap-x-4 lg:grid-cols-3">
                     <p className="text-sm leading-snug" style={{ color: "var(--bone-600)" }}>
-                      <span className="font-mono text-xs block mb-0.5 lg:hidden" style={{ color: "var(--bone-400)" }}>DO</span>
+                      <span className="font-mono text-xs block mb-0.5 lg:hidden" style={{ color: "var(--bone-600)" }}>DO</span>
                       {does}
                     </p>
                     <p className="text-sm leading-snug" style={{ color: "var(--bone-800)" }}>
-                      <span className="font-mono text-xs block mb-0.5 lg:hidden" style={{ color: "var(--bone-400)" }}>EARN</span>
+                      <span className="font-mono text-xs block mb-0.5 lg:hidden" style={{ color: "var(--bone-600)" }}>EARN</span>
                       {earns}
                     </p>
                     <p className="text-sm leading-snug" style={{ color: "var(--bone-600)" }}>
-                      <span className="font-mono text-xs block mb-0.5 lg:hidden" style={{ color: "var(--bone-400)" }}>RISK</span>
+                      <span className="font-mono text-xs block mb-0.5 lg:hidden" style={{ color: "var(--bone-600)" }}>RISK</span>
                       {risks}
                     </p>
                   </div>
@@ -832,7 +832,7 @@ export default function Home() {
                     <div
                       className="font-mono text-xs mb-1"
                       style={{
-                        color: active ? "var(--gold)" : "var(--bone-400)",
+                        color: active ? "var(--gold)" : "var(--bone-600)",
                         letterSpacing: "0.08em",
                       }}
                     >
@@ -848,7 +848,7 @@ export default function Home() {
                   <span
                     className="font-mono text-xs shrink-0"
                     style={{
-                      color: "var(--bone-400)",
+                      color: "var(--bone-600)",
                       background: "var(--cream-deep)",
                       padding: "2px 8px",
                       borderRadius: 4,
@@ -863,7 +863,7 @@ export default function Home() {
                   <div>
                     <div
                       className="font-mono text-xs mb-1"
-                      style={{ color: "var(--bone-400)", letterSpacing: "0.05em" }}
+                      style={{ color: "var(--bone-600)", letterSpacing: "0.05em" }}
                     >
                       HIDDEN
                     </div>
@@ -875,7 +875,7 @@ export default function Home() {
                     <div
                       className="font-mono text-xs mb-1"
                       style={{
-                        color: active ? "var(--gold)" : "var(--bone-400)",
+                        color: active ? "var(--gold)" : "var(--bone-600)",
                         letterSpacing: "0.05em",
                       }}
                     >
@@ -890,7 +890,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                <p className="text-xs leading-relaxed" style={{ color: "var(--bone-400)" }}>
+                <p className="text-xs leading-relaxed" style={{ color: "var(--bone-600)" }}>
                   {detail}
                 </p>
               </div>
@@ -901,7 +901,7 @@ export default function Home() {
           <div className="flex flex-wrap gap-3 items-center">
             <span
               className="font-mono text-xs"
-              style={{ color: "var(--bone-400)", letterSpacing: "0.06em" }}
+              style={{ color: "var(--bone-600)", letterSpacing: "0.06em" }}
             >
               ROADMAP
             </span>
@@ -910,7 +910,7 @@ export default function Home() {
                 key={v}
                 className="font-mono text-xs px-3 py-1.5 rounded"
                 style={{
-                  color: "var(--bone-400)",
+                  color: "var(--bone-600)",
                   border: "1px dashed var(--bone-200)",
                   background: "var(--cream)",
                 }}
@@ -918,7 +918,7 @@ export default function Home() {
                 {v}
               </span>
             ))}
-            <span className="text-xs" style={{ color: "var(--bone-400)" }}>
+            <span className="text-xs" style={{ color: "var(--bone-600)" }}>
               Enum variants defined. Implementations in v2.
             </span>
           </div>
@@ -983,7 +983,7 @@ export default function Home() {
                 <div>
                   <dt
                     className="font-mono text-xs mb-1"
-                    style={{ color: "var(--bone-400)", letterSpacing: "0.06em" }}
+                    style={{ color: "var(--bone-600)", letterSpacing: "0.06em" }}
                   >
                     {role.toUpperCase()}
                   </dt>
@@ -1031,7 +1031,7 @@ export default function Home() {
               </div>
               <p
                 className="font-semibold mb-2"
-                style={{ fontSize: "1rem", color: "var(--bone-400)" }}
+                style={{ fontSize: "1rem", color: "var(--bone-600)" }}
               >
                 Onchain SLA infrastructure.
               </p>
