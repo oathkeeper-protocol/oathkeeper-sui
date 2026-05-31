@@ -15,7 +15,7 @@ const sourceCodePro = Source_Code_Pro({
 });
 
 export const metadata: Metadata = {
-  title: "Oathkeeper — Onchain SLA Infrastructure",
+  title: "Oathkeeper: Onchain SLA Infrastructure",
   description:
     "Operators bond capital against promises. Open markets price reliability. Settlement is automatic.",
 };

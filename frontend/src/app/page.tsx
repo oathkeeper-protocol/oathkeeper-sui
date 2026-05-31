@@ -81,59 +81,254 @@ export default function Home() {
       {/* ── Hero ─────────────────────────────────────────────────────────────── */}
       <section
         className="max-w-6xl mx-auto px-6"
-        style={{ paddingTop: "clamp(4rem, 8vw, 7rem)", paddingBottom: "clamp(4rem, 6vw, 6rem)" }}
+        style={{ paddingTop: "clamp(4rem, 8vw, 7rem)", paddingBottom: "clamp(3rem, 5vw, 4rem)" }}
         aria-label="Hero"
       >
-        <div className="max-w-3xl">
-          <div
-            className="font-mono text-xs mb-6"
-            style={{ color: "var(--gold)" }}
-          >
-            Onchain SLA infrastructure
+        {/* Two-column: text left (~7/12), card right (~5/12) */}
+        <div className="grid grid-cols-1 lg:grid-cols-[7fr_5fr] gap-12 lg:gap-16 items-center">
+          {/* Left column — headline + subhead + CTAs */}
+          <div>
+            <div
+              className="font-mono text-xs mb-6"
+              style={{ color: "var(--gold)" }}
+            >
+              Onchain SLA infrastructure
+            </div>
+
+            <h1
+              className="font-bold leading-none tracking-tight mb-8"
+              style={{
+                fontSize: "clamp(2.75rem, 6vw, 5rem)",
+                color: "var(--bone-950)",
+                lineHeight: 1.05,
+              }}
+            >
+              Bond the outcome.
+              <br />
+              <span style={{ color: "var(--bone-800)" }}>Keep the work private.</span>
+            </h1>
+
+            <p
+              className="mb-10 leading-relaxed"
+              style={{
+                fontSize: "clamp(1.05rem, 1.5vw, 1.2rem)",
+                color: "var(--bone-800)",
+                maxWidth: "52ch",
+              }}
+            >
+              Operators bond capital against promises. Clients register SLA claims
+              against that bond. Open markets price reliability in real time.
+              Settlement is automatic.
+            </p>
+
+            <div className="flex flex-wrap gap-4">
+              <a href="#" className="btn-primary" style={{ padding: "0.75rem 1.5rem" }}>
+                Launch App
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                  <path d="M2.5 7h9M7 2.5l4.5 4.5L7 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </a>
+              <a href="#" className="btn-secondary">
+                Read the Docs
+              </a>
+            </div>
           </div>
 
-          <h1
-            className="font-bold leading-none tracking-tight mb-8"
-            style={{
-              fontSize: "clamp(2.75rem, 6vw, 5rem)",
-              color: "var(--bone-950)",
-              lineHeight: 1.05,
-            }}
-          >
-            Bond the outcome.
-            <br />
-            <span style={{ color: "var(--bone-800)" }}>Keep the work private.</span>
-          </h1>
+          {/* Right column — FeaturedOath card */}
+          <div>
+            {/* Card */}
+            <div
+              style={{
+                background: "var(--white)",
+                border: "1px solid var(--bone-200)",
+                borderRadius: 16,
+                boxShadow: "0 4px 24px -8px rgba(26,20,16,0.10), 0 1px 4px rgba(26,20,16,0.06)",
+                overflow: "hidden",
+                position: "relative",
+              }}
+            >
+              {/* Gold top rule — top accent only, not a side-stripe */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 3,
+                  background: "var(--gold)",
+                }}
+                aria-hidden="true"
+              />
 
-          <p
-            className="mb-10 leading-relaxed"
-            style={{
-              fontSize: "clamp(1.05rem, 1.5vw, 1.2rem)",
-              color: "var(--bone-800)",
-              maxWidth: "58ch",
-            }}
-          >
-            Operators bond capital against promises. Clients register SLA claims
-            against that bond. Open markets price reliability in real time.
-            Settlement is automatic.
-          </p>
+              {/* Card body */}
+              <div style={{ padding: "1.5rem 1.5rem 1.25rem", paddingTop: "1.75rem" }}>
 
-          <div className="flex flex-wrap gap-4">
-            <a href="#" className="btn-primary" style={{ padding: "0.75rem 1.5rem" }}>
-              Launch App
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                <path d="M2.5 7h9M7 2.5l4.5 4.5L7 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </a>
-            <a href="#" className="btn-secondary">
-              Read the Docs
-            </a>
+                {/* 1. Header: static gold dot + "Live · oath #00481" */}
+                <div
+                  className="flex items-center gap-2 font-mono"
+                  style={{ fontSize: "0.65rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--bone-600)", marginBottom: "1.25rem" }}
+                >
+                  <span
+                    style={{
+                      display: "inline-block",
+                      width: 7,
+                      height: 7,
+                      borderRadius: "50%",
+                      background: "var(--gold)",
+                      flexShrink: 0,
+                    }}
+                    aria-hidden="true"
+                  />
+                  <span>Live &middot; oath #00481</span>
+                </div>
+
+                {/* 2. Operator identity */}
+                <div
+                  style={{
+                    borderBottom: "1px solid var(--bone-200)",
+                    paddingBottom: "1rem",
+                    marginBottom: "1rem",
+                  }}
+                >
+                  <div
+                    className="font-mono"
+                    style={{ fontSize: "1rem", fontWeight: 600, color: "var(--bone-950)", letterSpacing: "0.02em", marginBottom: "0.25rem" }}
+                  >
+                    FIGHTER-APOLLO
+                  </div>
+                  <div
+                    className="font-mono"
+                    style={{ fontSize: "0.7rem", color: "var(--bone-600)", marginBottom: "0.375rem" }}
+                  >
+                    0x1a3f&hellip;e4c7
+                  </div>
+                  <div
+                    className="font-mono"
+                    style={{ fontSize: "0.7rem", color: "var(--bone-600)" }}
+                  >
+                    23 sworn &middot;{" "}
+                    <span style={{ color: "var(--gold-deep)" }}>87% kept</span>
+                  </div>
+                </div>
+
+                {/* 3. Bond posted */}
+                <div style={{ marginBottom: "0.75rem" }}>
+                  <div
+                    className="font-mono"
+                    style={{ fontSize: "0.625rem", color: "var(--bone-600)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.25rem" }}
+                  >
+                    Bond posted
+                  </div>
+                  <div
+                    className="font-mono tabular-nums"
+                    style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--bone-950)", lineHeight: 1.1, letterSpacing: "-0.02em" }}
+                  >
+                    1,000{" "}
+                    <span style={{ fontSize: "0.75rem", fontWeight: 500, color: "var(--bone-600)", letterSpacing: "0.08em" }}>USDC</span>
+                  </div>
+                </div>
+
+                {/* 4. Client claim row */}
+                <div
+                  className="font-mono"
+                  style={{ fontSize: "0.7rem", color: "var(--bone-600)", marginBottom: "1rem" }}
+                >
+                  Client claim &middot; 250 USDC against bond
+                </div>
+
+                {/* 5. Inscription */}
+                <p
+                  style={{
+                    fontFamily: "var(--font-figtree), system-ui, sans-serif",
+                    fontStyle: "italic",
+                    fontWeight: 500,
+                    fontSize: "0.9rem",
+                    lineHeight: 1.5,
+                    color: "var(--bone-800)",
+                    borderTop: "1px solid var(--bone-200)",
+                    paddingTop: "0.875rem",
+                    marginBottom: "1rem",
+                  }}
+                >
+                  Holds drawdown to{" "}
+                  <span style={{ color: "var(--gold-deep)", fontStyle: "normal", fontWeight: 700 }}>
+                    &le;20%
+                  </span>{" "}
+                  across at least{" "}
+                  <span style={{ color: "var(--gold-deep)", fontStyle: "normal", fontWeight: 700 }}>
+                    10
+                  </span>{" "}
+                  trades, this epoch.
+                </p>
+
+                {/* 6. Sentiment bar */}
+                <div style={{ marginBottom: "1rem" }}>
+                  {/* Bar */}
+                  <div
+                    style={{
+                      display: "flex",
+                      height: 6,
+                      borderRadius: 4,
+                      overflow: "hidden",
+                      background: "var(--bone-200)",
+                      marginBottom: "0.5rem",
+                    }}
+                  >
+                    <div style={{ width: "80%", background: "var(--sage)" }} />
+                    <div style={{ width: "20%", background: "var(--coral)" }} />
+                  </div>
+                  {/* Labels */}
+                  <div
+                    className="flex justify-between font-mono"
+                    style={{ fontSize: "0.625rem", letterSpacing: "0.04em" }}
+                  >
+                    <span style={{ color: "var(--sage-deep)" }}>Believers 1,240 USDC</span>
+                    <span style={{ color: "var(--coral-deep)" }}>Doubters 312 USDC</span>
+                  </div>
+                </div>
+
+                {/* 7. Countdown */}
+                <div
+                  className="flex items-center justify-between font-mono"
+                  style={{ fontSize: "0.7rem", marginBottom: "1rem" }}
+                >
+                  <span>
+                    Settles in{" "}
+                    <span style={{ color: "var(--gold-deep)", fontWeight: 600 }}>02:14:00</span>
+                  </span>
+                  <span style={{ color: "var(--bone-400)" }}>Sealed &middot; Walrus</span>
+                </div>
+
+                {/* 8. CTA */}
+                <a
+                  href="#"
+                  className="btn-secondary"
+                  style={{
+                    display: "flex",
+                    width: "100%",
+                    justifyContent: "center",
+                    borderRadius: 999,
+                    fontSize: "0.8rem",
+                  }}
+                >
+                  Open the manifest &rarr;
+                </a>
+              </div>
+            </div>
+
+            {/* Framing caption below card */}
+            <p
+              className="font-mono mt-4"
+              style={{ fontSize: "0.7rem", color: "var(--bone-600)", lineHeight: 1.5 }}
+            >
+              Saw an anon claim a 47% win rate? Put capital behind your doubt, or back the operator.
+            </p>
           </div>
         </div>
 
-        {/* Settlement conservation strip */}
+        {/* Settlement conservation strip — full-width below both columns */}
         <div
-          className="mt-20 font-mono text-sm flex flex-wrap gap-x-8 gap-y-2 items-center"
+          className="mt-16 font-mono text-sm flex flex-wrap gap-x-8 gap-y-2 items-center"
           style={{ color: "var(--bone-600)" }}
         >
           <span>Bond at risk</span>
@@ -206,13 +401,19 @@ export default function Home() {
               ] as const).map(({ n, label, desc, answer }, i) => (
                 <li
                   key={n}
-                  style={{
+                  style={answer ? {
+                    border: "1px solid var(--gold)",
+                    borderRadius: 8,
+                    background: "oklch(0.95 0.04 75)",
+                    padding: "1.75rem 1.5rem",
+                    marginTop: "0.5rem",
+                    marginBottom: "0.5rem",
+                  } : {
                     borderTop: i === 0 ? "1px solid var(--bone-200)" : undefined,
                     borderBottom: "1px solid var(--bone-200)",
-                    paddingTop: answer ? "1.75rem" : "1.25rem",
-                    paddingBottom: answer ? "1.75rem" : "1.25rem",
-                    borderLeft: answer ? "3px solid var(--gold)" : undefined,
-                    paddingLeft: answer ? "1.25rem" : 0,
+                    paddingTop: "1.25rem",
+                    paddingBottom: "1.25rem",
+                    paddingLeft: 0,
                   }}
                 >
                   <div className="flex gap-6 items-start">
@@ -249,7 +450,7 @@ export default function Home() {
                           <span
                             className="ml-3 font-mono text-xs"
                             style={{
-                              color: "var(--gold)",
+                              color: "var(--gold-ink)",
                               background: "var(--gold-dim)",
                               padding: "1px 7px",
                               borderRadius: 3,
@@ -360,7 +561,7 @@ export default function Home() {
                       className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-mono font-semibold"
                       style={{
                         background: active ? "var(--gold)" : "var(--bone-200)",
-                        color: active ? "oklch(0.99 0.005 85)" : "var(--bone-800)",
+                        color: active ? "var(--bone-950)" : "var(--bone-800)",
                         fontSize: "0.8rem",
                         position: "relative",
                         zIndex: 1,
@@ -453,7 +654,7 @@ export default function Home() {
                   does: "Bonds capital against a multi-dimensional SLA commitment",
                   earns: "Bond returned + 20% of Doubter stakes (if Kept)",
                   risks: "Full bond loss (if Broken)",
-                  roleColor: "var(--gold)",
+                  nameColor: "var(--gold-deep)",
                 },
                 {
                   name: "Client",
@@ -461,7 +662,7 @@ export default function Home() {
                   does: "Registers an SLA claim against the Oathkeeper bond",
                   earns: "Bond claim + 20% of Believer stakes (if Broken)",
                   risks: "Nothing. No capital required",
-                  roleColor: "var(--steel)",
+                  nameColor: "var(--steel-deep)",
                 },
                 {
                   name: "Believer",
@@ -469,7 +670,7 @@ export default function Home() {
                   does: "Stakes capital in favor of the Oathkeeper keeping the oath",
                   earns: "70% of Doubter stakes, pro-rata (if Kept)",
                   risks: "Full stake loss (if Broken)",
-                  roleColor: "var(--sage)",
+                  nameColor: "var(--sage-deep)",
                 },
                 {
                   name: "Doubter",
@@ -477,7 +678,7 @@ export default function Home() {
                   does: "Stakes capital against the Oathkeeper keeping the oath",
                   earns: "70% of Believer stakes, pro-rata (if Broken)",
                   risks: "Full stake loss (if Kept)",
-                  roleColor: "var(--coral)",
+                  nameColor: "var(--coral-deep)",
                 },
                 {
                   name: "Platform",
@@ -485,9 +686,9 @@ export default function Home() {
                   does: "Provides the settlement infrastructure and verification layer",
                   earns: "10% of loser stakes on every settlement",
                   risks: "Nothing. Guaranteed fee regardless of outcome",
-                  roleColor: "var(--bone-400)",
+                  nameColor: "var(--bone-800)",
                 },
-              ] as const).map(({ name, tag, does, earns, risks, roleColor }) => (
+              ] as const).map(({ name, tag, does, earns, risks, nameColor }) => (
                 <div
                   key={name}
                   className="py-4"
@@ -501,7 +702,7 @@ export default function Home() {
                       className="font-semibold"
                       style={{
                         fontSize: "0.95rem",
-                        color: roleColor,
+                        color: nameColor,
                       }}
                     >
                       {name}
@@ -542,7 +743,7 @@ export default function Home() {
                     borderRadius: 6,
                   }}
                 >
-                  <span style={{ color: "var(--gold)", fontWeight: 600, marginRight: "1rem" }}>Kept:</span>
+                  <span style={{ color: "var(--gold-ink)", fontWeight: 600, marginRight: "1rem" }}>Kept:</span>
                   Bond + Doubter stakes = Bond returned + 70% Believers + 20% Oathkeeper + 10% Platform
                 </div>
                 <div
@@ -554,7 +755,7 @@ export default function Home() {
                     borderRadius: 6,
                   }}
                 >
-                  <span style={{ color: "var(--coral)", fontWeight: 600, marginRight: "1rem" }}>Broken:</span>
+                  <span style={{ color: "var(--coral-ink)", fontWeight: 600, marginRight: "1rem" }}>Broken:</span>
                   Bond + Believer stakes = Client claim + 70% Doubters + 20% Client + 10% Platform
                 </div>
               </div>
@@ -836,7 +1037,7 @@ export default function Home() {
               </p>
               <p
                 className="leading-relaxed"
-                style={{ fontSize: "0.95rem", color: "oklch(0.40 0.02 60)", maxWidth: "48ch" }}
+                style={{ fontSize: "0.95rem", color: "var(--bone-300)", maxWidth: "48ch" }}
               >
                 Bond capital. Keep the strategy private. Let open markets price
                 your reliability. Settle on-chain without arbitration.
@@ -855,7 +1056,7 @@ export default function Home() {
                   </svg>
                 </a>
               </div>
-              <p className="font-mono text-xs" style={{ color: "oklch(0.40 0.02 60)" }}>
+              <p className="font-mono text-xs" style={{ color: "var(--bone-300)" }}>
                 DeFi and Payments track. Testnet deployed. MIT licensed.
               </p>
             </div>
@@ -865,10 +1066,10 @@ export default function Home() {
             className="mt-16 pt-6 flex flex-wrap items-center justify-between gap-4"
             style={{ borderTop: "1px solid oklch(0.25 0.02 60)" }}
           >
-            <span className="font-mono text-xs" style={{ color: "oklch(0.40 0.02 60)" }}>
+            <span className="font-mono text-xs" style={{ color: "var(--bone-300)" }}>
               Oathkeeper Protocol
             </span>
-            <span className="font-mono text-xs" style={{ color: "oklch(0.30 0.02 60)" }}>
+            <span className="font-mono text-xs" style={{ color: "var(--bone-300)" }}>
               Settlement is deterministic. Outcomes are neutral.
             </span>
           </div>

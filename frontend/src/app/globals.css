@@ -31,6 +31,15 @@
   /* Sage — Believer role */
   --sage: oklch(0.58 0.12 145);
 
+  /* Deep text variants — for text on light backgrounds (cream/white) */
+  --gold-deep:   oklch(0.48 0.15 75);
+  --coral-deep:  oklch(0.52 0.18 15);
+  --sage-deep:   oklch(0.48 0.12 145);
+  --steel-deep:  oklch(0.46 0.02 250);
+  /* ink variants — darker, for text on LIGHT tinted chips (bone-200 / gold-dim) */
+  --gold-ink:    oklch(0.43 0.15 75);
+  --coral-ink:   oklch(0.46 0.18 15);
+
   /* Semantic */
   --background: var(--cream);
   --foreground: var(--bone-950);
@@ -63,6 +72,12 @@
   --color-steel:        var(--steel);
   --color-steel-light:  var(--steel-light);
   --color-sage:         var(--sage);
+  --color-gold-deep:    var(--gold-deep);
+  --color-coral-deep:   var(--coral-deep);
+  --color-sage-deep:    var(--sage-deep);
+  --color-steel-deep:   var(--steel-deep);
+  --color-gold-ink:     var(--gold-ink);
+  --color-coral-ink:    var(--coral-ink);
   --font-sans: var(--font-figtree);
   --font-mono: var(--font-source-code-pro);
 }
@@ -89,7 +104,7 @@ body {
   font-size: 0.875rem;
   padding: 0.75rem 1.5rem;
   border-radius: 0.375rem;
-  background: var(--coral);
+  background: oklch(0.55 0.18 15);
   color: oklch(0.99 0.005 85);
   text-decoration: none;
   transition: background 150ms ease-out;
@@ -97,7 +112,7 @@ body {
   cursor: pointer;
 }
 .btn-primary:hover {
-  background: oklch(0.55 0.18 15);
+  background: oklch(0.48 0.18 15);
 }
 
 .btn-primary-lg {
