@@ -97,6 +97,19 @@ export default function OathCard({ oath }: { oath: Oath }) {
             {oath.oathType.replace("Oath", "")}
           </span>
           <StatusBadge status={oath.status} />
+          {oath.onchain && (
+            <span
+              className="inline-flex items-center gap-1 font-mono"
+              style={{ fontSize: "0.55rem", letterSpacing: "0.08em", color: "var(--sage-deep)" }}
+              title="Read live from the Sui testnet deployment"
+            >
+              <span
+                aria-hidden="true"
+                style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--sage-deep)" }}
+              />
+              LIVE · TESTNET
+            </span>
+          )}
         </div>
       </div>
 

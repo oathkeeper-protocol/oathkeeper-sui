@@ -132,7 +132,21 @@ export default async function OathDetailPage({
           Browse oaths
         </Link>
         <span aria-hidden="true">/</span>
-        <span style={{ color: "var(--bone-800)" }}>{oath.oathId}</span>
+        {oath.explorerUrl ? (
+          <a
+            href={oath.explorerUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 transition-colors"
+            style={{ color: "var(--sage-deep)", textDecoration: "none" }}
+            title="View this oath on the Sui testnet explorer"
+          >
+            {oath.oathId.slice(0, 10)}…{oath.oathId.slice(-6)}
+            <span style={{ fontSize: "0.7em" }} aria-hidden="true">↗ live</span>
+          </a>
+        ) : (
+          <span style={{ color: "var(--bone-800)" }}>{oath.oathId}</span>
+        )}
       </nav>
 
       {/* Title strip — operator + standing + status + ambient countdown */}
