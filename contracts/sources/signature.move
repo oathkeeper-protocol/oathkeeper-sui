@@ -8,8 +8,12 @@
 ///               `vector<u8>` (20 bytes for EVM), the scope_hash preimage shifts to match,
 ///               and EIP-191 prefix wrapping + `ecdsa_k1::decompress_pubkey` get added.
 ///
-/// Replay protection: signed message preimage includes scope_hash, epoch_id, binding_nonce,
-/// valid_from_ms, valid_until_ms. A single exec_addr cannot back two active oaths
+/// Replay protection: signed message preimage includes scope_hash, binding_nonce,
+/// valid_from_ms, valid_until_ms. Every term is knowable off-chain BEFORE the binding
+/// tx lands, so the exec wallet can pre-sign it (the earlier design folded the live
+/// consensus clock into the preimage, which made the ed25519 path unsignable on a live
+/// network). `now_ms` is checked against [valid_from_ms, valid_until_ms] at bind time but
+/// is NOT part of the signed bytes. A single exec_addr cannot back two active oaths
 /// simultaneously — enforced separately in `registry`.
 module oathkeeper::signature;
 
@@ -50,7 +54,6 @@ public fun verify_exec_binding(
     signature: vector<u8>,
     claimed_exec_addr: address,
     scope_hash: vector<u8>,
-    epoch_id: u64,
     binding_nonce: u64,
     valid_from_ms: u64,
     valid_until_ms: u64,
@@ -62,7 +65,6 @@ public fun verify_exec_binding(
 
     let preimage = build_binding_preimage(
         scope_hash,
-        epoch_id,
         binding_nonce,
         valid_from_ms,
         valid_until_ms,
@@ -100,18 +102,16 @@ public fun verify_exec_binding(
 }
 
 /// Canonical preimage builder. Public so off-chain signers can construct the exact bytes
-/// they need to sign. Layout: scope_hash || bcs(epoch_id) || bcs(binding_nonce) ||
-/// bcs(valid_from_ms) || bcs(valid_until_ms).
+/// they need to sign. Layout: scope_hash || bcs(binding_nonce) || bcs(valid_from_ms) ||
+/// bcs(valid_until_ms). All terms are known before the binding tx lands.
 public fun build_binding_preimage(
     scope_hash: vector<u8>,
-    epoch_id: u64,
     binding_nonce: u64,
     valid_from_ms: u64,
     valid_until_ms: u64,
 ): vector<u8> {
     let mut preimage = vector::empty<u8>();
     vector::append(&mut preimage, scope_hash);
-    vector::append(&mut preimage, bcs::to_bytes(&epoch_id));
     vector::append(&mut preimage, bcs::to_bytes(&binding_nonce));
     vector::append(&mut preimage, bcs::to_bytes(&valid_from_ms));
     vector::append(&mut preimage, bcs::to_bytes(&valid_until_ms));

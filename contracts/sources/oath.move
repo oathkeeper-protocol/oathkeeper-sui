@@ -230,10 +230,18 @@ public fun start_epoch<T>(
     }
 }
 
+/// Step 2 of mint. `valid_from_ms`/`valid_until_ms` define the binding-signature window
+/// the exec wallet signed over (along with scope_hash + binding_nonce). They are explicit
+/// params — NOT derived from the consensus clock — so the exec wallet can pre-sign the
+/// preimage before the tx lands. The contract checks `valid_from_ms <= now <= valid_until_ms`
+/// inside `verify_exec_binding`. The epoch window (`epoch_end_ms`) is independent and still
+/// derived from the clock at bind time.
 public fun bind_exec_wallet<T>(
     reservation: ScopeReservation<T>,
     exec_signature: vector<u8>,
     exec_pubkey: vector<u8>,
+    valid_from_ms: u64,
+    valid_until_ms: u64,
     registry: &mut Registry,
     clock: &Clock,
     ctx: &mut TxContext,
@@ -251,7 +259,7 @@ public fun bind_exec_wallet<T>(
 
     let ok = signature::verify_exec_binding(
         scheme, exec_pubkey, exec_signature, scope.exec_addr,
-        scope_hash, now_ms, binding_nonce, now_ms, epoch_end_ms, now_ms,
+        scope_hash, binding_nonce, valid_from_ms, valid_until_ms, now_ms,
     );
     assert!(ok, ESignatureInvalid);
 

@@ -28,7 +28,7 @@ fun mint_oath(client_claim: u64): Scenario {
         b"blob", 42, 100_000, &clock, test_scenario::ctx(&mut scenario),
     );
     oath::bind_exec_wallet<USDC>(
-        reservation, b"sig", b"pk", &mut registry, &clock, test_scenario::ctx(&mut scenario),
+        reservation, b"sig", b"pk", 0, 9_000_000_000_000, &mut registry, &clock, test_scenario::ctx(&mut scenario),
     );
     clock::destroy_for_testing(clock);
     test_scenario::return_shared(registry);
@@ -89,7 +89,7 @@ fun mint_aborts_min_trades_zero() {
         bond, test_utils::client_addr(), 500, b"b", 1, 100_000,
         &clock, test_scenario::ctx(&mut scenario),
     );
-    oath::bind_exec_wallet<USDC>(reservation, b"", b"", &mut registry, &clock, test_scenario::ctx(&mut scenario));
+    oath::bind_exec_wallet<USDC>(reservation, b"", b"", 0, 9_000_000_000_000, &mut registry, &clock, test_scenario::ctx(&mut scenario));
     clock::destroy_for_testing(clock);
     test_scenario::return_shared(registry);
     test_scenario::end(scenario);
@@ -110,7 +110,7 @@ fun mint_aborts_claim_exceeds_bond() {
         bond, test_utils::client_addr(), 5000, b"b", 1, 100_000,
         &clock, test_scenario::ctx(&mut scenario),
     );
-    oath::bind_exec_wallet<USDC>(reservation, b"", b"", &mut registry, &clock, test_scenario::ctx(&mut scenario));
+    oath::bind_exec_wallet<USDC>(reservation, b"", b"", 0, 9_000_000_000_000, &mut registry, &clock, test_scenario::ctx(&mut scenario));
     clock::destroy_for_testing(clock);
     test_scenario::return_shared(registry);
     test_scenario::end(scenario);
@@ -131,7 +131,7 @@ fun mint_aborts_validator_oath() {
         bond, test_utils::client_addr(), 500, b"b", 1, 100_000,
         &clock, test_scenario::ctx(&mut scenario),
     );
-    oath::bind_exec_wallet<USDC>(reservation, b"", b"", &mut registry, &clock, test_scenario::ctx(&mut scenario));
+    oath::bind_exec_wallet<USDC>(reservation, b"", b"", 0, 9_000_000_000_000, &mut registry, &clock, test_scenario::ctx(&mut scenario));
     clock::destroy_for_testing(clock);
     test_scenario::return_shared(registry);
     test_scenario::end(scenario);
