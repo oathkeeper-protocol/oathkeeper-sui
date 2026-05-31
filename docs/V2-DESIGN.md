@@ -383,12 +383,12 @@ What ships and is demonstrable end-to-end:
 
 | Component | Status |
 |---|---|
-| Move contracts (6 modules) | Complete — 62 tests passing |
-| Single operator, single client SLA | Full flow demonstrable |
-| Believer/Doubter staking | Implemented (currently Doubter-only, Believer is additive) |
-| 10/20/70 settlement split | Needs contract update |
-| Automatic settlement | Complete — permissionless |
-| ed25519 exec wallet binding | Complete |
+| Move contracts (7 modules) | Complete, 46 tests passing |
+| Single operator, single client SLA | Full flow demonstrable; proven e2e on testnet |
+| Believer/Doubter staking | Complete; both sides shipped + tested |
+| 10/20/70 settlement split | Shipped (economics::compute_split, conservation-tested) |
+| Automatic settlement | Complete, permissionless |
+| ed25519 exec wallet binding | Complete; real signature proven (offline vector -> Move test) |
 | Scope uniqueness enforcement | Complete |
 | Vault yield | Mocked — fixed APY, documented as v2 |
 | Multi-client per bond | Documented as v2, conceptually demonstrated in pitch |

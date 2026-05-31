@@ -25,6 +25,9 @@ import {
 import { log } from './log.js';
 
 const EPOCH_MS = 60_000;
+// SCENARIO=kept (default) records 10 trades -> all dims pass -> Believers win.
+// SCENARIO=broken records 0 trades -> min_trades breach -> Client paid, Doubters win.
+const SCENARIO = (process.env.SCENARIO ?? 'kept') as 'kept' | 'broken';
 
 const opts = { showEvents: true, showEffects: true, showObjectChanges: true, showBalanceChanges: true } as const;
 
@@ -74,7 +77,7 @@ async function main() {
 
   // 1. Fund role wallets with SUI gas from the deployer (one PTB).
   const fund = new Transaction();
-  const gasEach = 150_000_000n; // 0.15 SUI
+  const gasEach = 60_000_000n; // 0.06 SUI — each role only signs 1-2 small txns
   const [c1, c2, c3, c4] = fund.splitCoins(fund.gas, [gasEach, gasEach, gasEach, gasEach]);
   fund.transferObjects([c1], addrs.oathkeeper);
   fund.transferObjects([c2], addrs.believer);
@@ -123,13 +126,18 @@ async function main() {
   assert(dPos.stake_amount === '1500', 'DoubterStaked stake_amount == 1500');
   const doubterPosId = dPos.position_id;
 
-  // 6. Attestations: 10 trades, end equity 110000 (> pnl floor 105000), satisfies KEPT.
-  const tradeRes = await run(client, exec, buildRecordTradesPtb({
-    oathId, venueTxHash: '0xdeadbeef', asset: 'BTC',
-    pnlDelta: 10_000n, pnlNegative: false, equityAfter: 110_000n, notional: 1_000n,
-  }, 10), 'record-10-trades');
-  const tradeEvents = (tradeRes.events ?? []).filter((e: any) => e.type.endsWith('::attestation::TradeAttested'));
-  assert(tradeEvents.length === 10, '10 TradeAttested events emitted');
+  // 6. Attestations. KEPT: 10 trades, equity 110000 (> pnl floor 105000) -> all dims pass.
+  //    BROKEN: 0 trades -> settle detects trade_count < min_trades -> breach.
+  if (SCENARIO === 'kept') {
+    const tradeRes = await run(client, exec, buildRecordTradesPtb({
+      oathId, venueTxHash: '0xdeadbeef', asset: 'BTC',
+      pnlDelta: 10_000n, pnlNegative: false, equityAfter: 110_000n, notional: 1_000n,
+    }, 10), 'record-10-trades');
+    const tradeEvents = (tradeRes.events ?? []).filter((e: any) => e.type.endsWith('::attestation::TradeAttested'));
+    assert(tradeEvents.length === 10, '10 TradeAttested events emitted');
+  } else {
+    log.info('SCENARIO=broken: recording 0 trades -> min_trades breach at settle');
+  }
 
   // 7. Wait for epoch end, then settle (retry on EEpochNotEnded = abort 5).
   const waitMs = epochEndMs - Date.now() + 3_000;
@@ -148,21 +156,35 @@ async function main() {
     }
   }
   const settled = eventData(settleRes, '::oath::OathSettled');
-  assert(settled.final_status === 1, 'OathSettled final_status == 1 (Kept)');
-  assert(settled.bond_to_promiser === '10000', 'bond_to_promiser == 10000');
-  assert(settled.bond_to_client === '0', 'bond_to_client == 0 (Kept)');
-  assert(settled.loser_to_platform === '150', 'loser_to_platform == 150 (10% of 1500)');
-  assert(settled.loser_to_secondary === '300', 'loser_to_secondary == 300 (20% to promiser)');
-  assert(settled.loser_to_winners === '1050', 'loser_to_winners == 1050 (70%)');
+  if (SCENARIO === 'kept') {
+    assert(settled.final_status === 1, 'OathSettled final_status == 1 (Kept)');
+    assert(settled.bond_to_promiser === '10000', 'bond_to_promiser == 10000');
+    assert(settled.bond_to_client === '0', 'bond_to_client == 0 (Kept)');
+    assert(settled.loser_to_platform === '150', 'loser_to_platform == 150 (10% of doubter 1500)');
+    assert(settled.loser_to_secondary === '300', 'loser_to_secondary == 300 (20% to promiser)');
+    assert(settled.loser_to_winners === '1050', 'loser_to_winners == 1050 (70%)');
+  } else {
+    assert(settled.final_status === 2, 'OathSettled final_status == 2 (Broken)');
+    assert(settled.bond_to_promiser === '0', 'bond_to_promiser == 0 (Broken)');
+    assert(settled.bond_to_client === '5000', 'bond_to_client == 5000 (client claim)');
+    assert(settled.bond_residual_to_platform === '5000', 'bond_residual_to_platform == 5000 (10000-5000)');
+    assert(settled.loser_to_platform === '200', 'loser_to_platform == 200 (10% of believer 2000)');
+    assert(settled.loser_to_secondary === '400', 'loser_to_secondary == 400 (20% to client)');
+    assert(settled.loser_to_winners === '1400', 'loser_to_winners == 1400 (70%)');
+  }
 
-  // 8. Claims.
+  // 8. Claims. Winner side claims a payout; loser side claims 0.
   const bClaim = await run(client, believer, buildBelieverClaimPtb(believerPosId, oathId), 'believer-claim');
-  assert(eventData(bClaim, '::believer::BelieverPayout').amount === '3050', 'BelieverPayout == 3050 (2000 + 1050)');
-
   const dClaim = await run(client, doubter, buildDoubterClaimPtb(doubterPosId, oathId), 'doubter-claim');
-  assert(eventData(dClaim, '::doubter::DoubterPayout').amount === '0', 'DoubterPayout == 0 (loser on Kept)');
+  if (SCENARIO === 'kept') {
+    assert(eventData(bClaim, '::believer::BelieverPayout').amount === '3050', 'BelieverPayout == 3050 (2000 + 1050)');
+    assert(eventData(dClaim, '::doubter::DoubterPayout').amount === '0', 'DoubterPayout == 0 (loser on Kept)');
+  } else {
+    assert(eventData(bClaim, '::believer::BelieverPayout').amount === '0', 'BelieverPayout == 0 (loser on Broken)');
+    assert(eventData(dClaim, '::doubter::DoubterPayout').amount === '2900', 'DoubterPayout == 2900 (1500 + 1400)');
+  }
 
-  // 9. Post-snapshot + conservation (deltas must sum to zero).
+  // 9. Post-snapshot + conservation (deltas must sum to zero in both scenarios).
   const post = {
     oathkeeper: await usdcBalance(client, addrs.oathkeeper),
     believer: await usdcBalance(client, addrs.believer),
@@ -178,14 +200,22 @@ async function main() {
     client: post.client - pre.client,
   };
   log.info({ pre, post, delta: d }, 'conservation snapshot');
-  assert(d.oathkeeper === 300n, 'oathkeeper delta +300 (bond back + 20% doubter pool)');
-  assert(d.believer === 1050n, 'believer delta +1050 (70% doubter pool)');
-  assert(d.doubter === -1500n, 'doubter delta -1500 (loser on Kept)');
-  assert(d.platform === 150n, 'platform delta +150 (10% doubter pool)');
-  assert(d.client === 0n, 'client delta 0 (no payout on Kept)');
+  if (SCENARIO === 'kept') {
+    assert(d.oathkeeper === 300n, 'oathkeeper +300 (bond back + 20% doubter pool)');
+    assert(d.believer === 1050n, 'believer +1050 (70% doubter pool)');
+    assert(d.doubter === -1500n, 'doubter -1500 (loser on Kept)');
+    assert(d.platform === 150n, 'platform +150 (10% doubter pool)');
+    assert(d.client === 0n, 'client 0 (no payout on Kept)');
+  } else {
+    assert(d.oathkeeper === -10000n, 'oathkeeper -10000 (bond lost on Broken)');
+    assert(d.believer === -2000n, 'believer -2000 (loser on Broken)');
+    assert(d.doubter === 1400n, 'doubter +1400 (70% believer pool)');
+    assert(d.platform === 5200n, 'platform +5200 (bond residual 5000 + 10% believer 200)');
+    assert(d.client === 5400n, 'client +5400 (claim 5000 + 20% believer 400)');
+  }
   assert(d.oathkeeper + d.believer + d.doubter + d.platform + d.client === 0n, 'CONSERVATION: deltas sum to 0');
 
-  log.info('E2E PASSED — primary + secondary + settlement + conservation all green on ' + env.network);
+  log.info('E2E PASSED (' + SCENARIO + ') — primary + secondary + settlement + conservation green on ' + env.network);
 }
 
 main().catch((e) => { log.error({ err: String(e?.message ?? e) }, 'E2E FAILED'); process.exit(1); });

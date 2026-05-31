@@ -2,6 +2,17 @@
 
 > Status: scaffold placeholder. Week 1 Day 1-2 task is to fill this in with the Move object design before writing any contract code.
 
+> **⚠️ v2 SUPERSESSION (read first).** Sections below that describe an **LP pool**
+> (`LPPool<T>`, `LPShare<T>`, `economics::create_pool`, a **60/40** premium split, or
+> `doubter::claim_payout` taking `&mut LPPool<T>`) are **v1 and no longer accurate.**
+> The shipped v2 economics is a **5-role model** (Oathkeeper / Client / Believer / Doubter
+> / Platform) with a **10/20/70** split of loser stakes; there is **no LP pool**. Believers
+> replaced the LP role as active market participants. `economics.move` is now just
+> `compute_split` (10/20/70 bps). The authoritative economic spec is `docs/V2-DESIGN.md`;
+> the authoritative contract surface is `contracts/sources/*.move` (46 tests). The Move
+> object model, Hot Potato mint, scope-uniqueness, and Walrus/Seal/DeepBook notes below
+> remain accurate.
+
 ## Move modules (planned)
 
 ```
