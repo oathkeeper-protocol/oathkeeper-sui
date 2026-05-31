@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 function CompassMark({ size = 24 }: { size?: number }) {
   const r = size / 2;
   const c = r;
@@ -71,9 +73,9 @@ export default function Home() {
             <a href="#verticals" className="nav-link">
               Verticals
             </a>
-            <a href="#" className="btn-primary" style={{ padding: "0.375rem 1rem" }}>
+            <Link href="/oaths" className="btn-primary" style={{ padding: "0.375rem 1rem" }}>
               Launch App
-            </a>
+            </Link>
           </div>
         </div>
       </nav>
@@ -122,14 +124,14 @@ export default function Home() {
             </p>
 
             <div className="flex flex-wrap gap-4">
-              <a href="#" className="btn-primary" style={{ padding: "0.75rem 1.5rem" }}>
+              <Link href="/oaths" className="btn-primary" style={{ padding: "0.75rem 1.5rem" }}>
                 Launch App
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
                   <path d="M2.5 7h9M7 2.5l4.5 4.5L7 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-              </a>
-              <a href="#" className="btn-secondary">
-                Read the Docs
+              </Link>
+              <a href="#how-it-works" className="btn-secondary">
+                How it works
               </a>
             </div>
           </div>
@@ -300,8 +302,8 @@ export default function Home() {
                 </div>
 
                 {/* 8. CTA */}
-                <a
-                  href="#"
+                <Link
+                  href="/oaths"
                   className="btn-secondary"
                   style={{
                     display: "flex",
@@ -312,7 +314,7 @@ export default function Home() {
                   }}
                 >
                   Open the manifest &rarr;
-                </a>
+                </Link>
               </div>
             </div>
 
@@ -1046,9 +1048,9 @@ export default function Home() {
 
             <div className="flex flex-col gap-4 lg:items-start">
               <div className="flex flex-wrap gap-4">
-                <a href="#" className="btn-primary btn-primary-lg">
+                <Link href="/oaths" className="btn-primary btn-primary-lg">
                   Launch App
-                </a>
+                </Link>
                 <a href="#" className="btn-secondary-dark">
                   View on GitHub
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
