@@ -135,6 +135,10 @@ export interface Oath {
   explorerUrl?: string;
   /** Bound exec wallet address (from scope.exec_addr). Live oaths only. */
   execAddr?: string;
+  /** True once a dispute has been filed against this oath's attestations (hardened package). */
+  disputed?: boolean;
+  /** Number of disputes filed (durable, monotonic on-chain counter). */
+  disputeCount?: number;
 }
 
 // ─── Time helpers for stable relative timestamps ────────────────────────────

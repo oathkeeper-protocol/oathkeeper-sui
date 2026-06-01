@@ -65,6 +65,9 @@ export function mapOath(content: unknown): Oath | null {
     onchain: true,
     explorerUrl: explorerObject(oathId),
     execAddr: f.scope?.fields?.exec_addr as string | undefined,
+    // Dispute fields exist only on the hardened package; default safely on older objects.
+    disputed: Boolean(f.disputed),
+    disputeCount: Number(f.dispute_count ?? 0),
   };
 }
 

@@ -230,15 +230,15 @@ export default function LiveOathView({
               className="font-mono"
               style={{ fontSize: "0.62rem", color: "var(--bone-600)" }}
             >
-              Full terms are encrypted on Walrus; only the published claim is
-              public.
+              The oath&rsquo;s text reference is committed on-chain. Encrypted Walrus +
+              Seal storage (so the method stays private) is on the roadmap.
             </span>
             <span
               className="font-mono whitespace-nowrap"
               style={{ fontSize: "0.65rem", color: "var(--bone-600)" }}
-              title={`Walrus blob (sealed via Seal): ${walrusBlobId}`}
+              title={`On-chain text reference (sealed_oath_text_root preview): ${walrusBlobId}`}
             >
-              blob {walrusBlobId}
+              ref {walrusBlobId}
             </span>
           </div>
         </section>
@@ -420,6 +420,75 @@ export default function LiveOathView({
             doubterTotal={doubter}
             height={10}
           />
+        </section>
+
+        {/* Verification — the open-source reconciler */}
+        <section
+          style={{
+            background: "var(--white)",
+            border: "1px solid var(--bone-200)",
+            borderRadius: 12,
+            padding: "1.25rem",
+          }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <span
+              className="font-mono"
+              style={{
+                fontSize: "0.6rem",
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                color: "var(--bone-600)",
+              }}
+            >
+              Verification · reconciliation
+            </span>
+            {o.disputeCount && o.disputeCount > 0 ? (
+              <span
+                className="font-mono"
+                style={{ fontSize: "0.62rem", fontWeight: 600, color: "var(--coral-deep)" }}
+              >
+                ⚠ {o.disputeCount} dispute{o.disputeCount === 1 ? "" : "s"} filed
+              </span>
+            ) : (
+              <span
+                className="font-mono"
+                style={{ fontSize: "0.62rem", color: "var(--bone-600)" }}
+              >
+                no disputes filed
+              </span>
+            )}
+          </div>
+          <p
+            className="leading-relaxed mb-3"
+            style={{ fontSize: "0.82rem", color: "var(--bone-800)" }}
+          >
+            Settlement enforces the dimensions on-chain. An open-source, deterministic
+            reconciler independently diffs the operator&rsquo;s attestations against the
+            venue&rsquo;s own fill record — a fabricated fill is provable by anyone, who can
+            then file <span className="font-mono">dispute_attestation</span> on-chain.
+          </p>
+          <div
+            className="font-mono"
+            style={{
+              fontSize: "0.7rem",
+              color: "var(--bone-800)",
+              background: "var(--cream-deep)",
+              borderRadius: 6,
+              padding: "0.55rem 0.7rem",
+              overflowX: "auto",
+            }}
+          >
+            pnpm reconcile {oathId.slice(0, 10)}…
+          </div>
+          <p
+            className="font-mono mt-2"
+            style={{ fontSize: "0.6rem", color: "var(--bone-600)", lineHeight: 1.5 }}
+          >
+            Trustless for on-chain venues (DeepBook — the chain is the oracle). Off-chain
+            venues (Hyperliquid, uptime) resolve via Nautilus / zkTLS attestation — roadmap.
+            Auto-slash on a proven dispute is the bonded-optimistic layer.
+          </p>
         </section>
       </div>
 
