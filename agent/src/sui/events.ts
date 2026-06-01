@@ -83,6 +83,7 @@ export interface AttestationDisputed {
   oath_id: string;
   venue_tx_hash: number[];
   disputer: string;
+  dispute_count: string;
 }
 
 // === Enums + constants ===

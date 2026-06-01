@@ -40,6 +40,7 @@ public struct AttestationDisputed has copy, drop {
     oath_id: ID,
     venue_tx_hash: vector<u8>,
     disputer: address,
+    dispute_count: u64,
 }
 
 // === Entry: record a trade fill ===
@@ -90,19 +91,25 @@ public entry fun record_trade<T>(
 
 // === Entry: dispute a recorded attestation ===
 
-/// Any wallet can dispute. Off-chain reconciliation indexer surfaces the discrepancy;
-/// dispute resolution (Week 3 Day 21) decides what `mark_breach_by_dispute` does with
-/// the proof. For Week 1, this just emits an event so the indexer can pick it up.
+/// Any wallet can dispute — typically the open-source reconciler (agent/src/recon), which
+/// deterministically proves that an attested fill has no on-chain venue backing. This
+/// records a durable, monotonic dispute on the Oath (`disputed` flag + `dispute_count`) and
+/// emits an event. `evidence` is an opaque reference (e.g. a Walrus blob id of the
+/// reconciliation report). Resolution — turning a substantiated dispute into automatic
+/// bond slashing via a bonded-optimistic challenge window — is roadmap (see ARCHITECTURE.md);
+/// this layer makes the challenge permanent and publicly visible.
 public entry fun dispute_attestation<T>(
-    oath: &Oath<T>,
+    oath: &mut Oath<T>,
     venue_tx_hash: vector<u8>,
-    _proof: vector<u8>,
+    _evidence: vector<u8>,
     ctx: &mut TxContext,
 ) {
+    oath::record_dispute(oath);
     event::emit(AttestationDisputed {
         oath_id: object::id(oath),
         venue_tx_hash,
         disputer: tx_context::sender(ctx),
+        dispute_count: oath::dispute_count(oath),
     });
 }
 

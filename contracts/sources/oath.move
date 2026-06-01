@@ -128,6 +128,13 @@ public struct Oath<phantom T> has key {
     // --- State ---
     status: u8,
     breach_reason: Option<u8>,
+    // --- Dispute tracking (reconciliation layer) ---
+    /// Set once any party files a dispute via `attestation::dispute_attestation` (a
+    /// reconciler found an attested fill with no on-chain venue backing). A durable signal
+    /// that the oath's attestations were challenged. Turning a dispute into automatic
+    /// slashing is the bonded-optimistic resolution layer — roadmap (see ARCHITECTURE.md).
+    disputed: bool,
+    dispute_count: u64,
 }
 
 // === Hot Potato ===
@@ -312,6 +319,8 @@ public fun bind_exec_wallet<T>(
         trade_count: 0,
         status: STATUS_ACTIVE,
         breach_reason: option::none<u8>(),
+        disputed: false,
+        dispute_count: 0,
     };
 
     let oath_id = object::id(&oath);
@@ -548,6 +557,8 @@ public fun total_believer_stakes<T>(o: &Oath<T>): u64 { o.total_believer_stakes 
 public fun total_doubter_stakes<T>(o: &Oath<T>): u64 { o.total_doubter_stakes }
 public fun winner_payout_pool_value<T>(o: &Oath<T>): u64 { balance::value(&o.winner_payout_pool) }
 public fun winner_stakes_remaining<T>(o: &Oath<T>): u64 { o.winner_stakes_remaining }
+public fun disputed<T>(o: &Oath<T>): bool { o.disputed }
+public fun dispute_count<T>(o: &Oath<T>): u64 { o.dispute_count }
 
 public fun max_drawdown_bps(d: &OathDimensions): u64 { d.max_drawdown_bps }
 public fun min_trades(d: &OathDimensions): u64 { d.min_trades }
@@ -617,6 +628,14 @@ public(package) fun claim_winner_share<T>(
 public(package) fun set_status<T>(oath: &mut Oath<T>, status: u8, reason: Option<u8>) {
     oath.status = status;
     oath.breach_reason = reason;
+}
+
+/// Record a dispute filed against this oath's attestations (called by the attestation
+/// module). Durable, monotonic counter — does not change settlement on its own; the
+/// reconciler's proof + a future bonded-optimistic resolution drive any slashing.
+public(package) fun record_dispute<T>(oath: &mut Oath<T>) {
+    oath.disputed = true;
+    oath.dispute_count = oath.dispute_count + 1;
 }
 
 // === OathType constructors ===
