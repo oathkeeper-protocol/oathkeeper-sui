@@ -133,6 +133,8 @@ export interface Oath {
   onchain?: boolean;
   /** Sui explorer link to the on-chain Oath object (live oaths only). */
   explorerUrl?: string;
+  /** Bound exec wallet address (from scope.exec_addr). Live oaths only. */
+  execAddr?: string;
 }
 
 // ─── Time helpers for stable relative timestamps ────────────────────────────

@@ -1,68 +1,182 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useCurrentAccount, useSignAndExecuteTransaction, useSuiClient } from "@mysten/dapp-kit";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Oath } from "@/lib/mock";
+import { fetchOwnedPositions } from "@/lib/chain";
+import {
+  buildSettlePtb,
+  buildMarkBreachPtb,
+  buildBelieverClaimPtb,
+  buildDoubterClaimPtb,
+} from "@/lib/ptb";
+import { explorerTx } from "@/lib/chain-config";
 import SettleConfirm from "@/components/SettleConfirm";
 
 /**
- * DetailActionBar — the sticky bottom action strip for the oath detail screen.
+ * DetailActionBar — sticky bottom action strip for the oath detail screen.
  *
- * Screen-local client leaf (holds modal + pending state). It enforces the
- * "Absent until valid" rule from DESIGN.md: actions are NOT rendered as
- * disabled buttons, they simply do not appear until they can be taken.
+ * "Absent until valid": actions only appear when they can be taken.
+ *   Active, equity below floor   -> Mark Breach (permissionless)
+ *   Active/resolved, epoch ended -> Settle (permissionless, after modal)
+ *   Settled, wallet has position -> Claim Payout
  *
- *   Active, equity below floor   -> Mark Breach
- *   Active/resolved, epoch ended -> Settle (opens the irreversible confirm modal)
- *   Settled / past resolution    -> Claim Payout
- *
- * Settlement is permissionless on-chain (anyone can trigger it), so the bar
- * notes that. There is no glassmorphism here — solid cream with a 1px top rule,
- * matching the AppNav treatment.
+ * All buttons are real on-chain transactions for onchain===true oaths.
+ * Mock oaths show a disabled "Demo oath" note.
  */
-export default function DetailActionBar({
-  oath,
-  outcome,
-  breached,
-  epochEnded,
-  resolved,
-}: {
-  oath: Oath;
-  outcome: "Kept" | "Broken";
-  /** current_equity < drawdown floor — the mid-epoch breach trigger. */
-  breached: boolean;
-  /** now >= epoch end — the settlement boundary. */
-  epochEnded: boolean;
-  /** Status is not Active (Kept / Broken / Settled). */
-  resolved: boolean;
-}) {
+export default function DetailActionBar({ oath }: { oath: Oath }) {
+  const account = useCurrentAccount();
+  const client = useSuiClient();
+  const queryClient = useQueryClient();
+  const { mutate: signAndExecute } = useSignAndExecuteTransaction();
+
+  // Hydration guard: do NOT compute Date.now() in render (causes SSR mismatch).
+  // Gate all time-dependent buttons on this being true.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pending, setPending] = useState(false);
-  const [settled, setSettled] = useState(oath.status === "Settled");
-  const [claimed, setClaimed] = useState(false);
-  const [breachFlagged, setBreachFlagged] = useState(false);
+  const [txDigest, setTxDigest] = useState<string | null>(null);
+  const [txError, setTxError] = useState<string | null>(null);
 
-  // Mark Breach only while still live, the equity floor is broken, and the
-  // breach has not already been flagged this session.
-  const showMarkBreach = oath.status === "Active" && breached && !breachFlagged;
-  // Settle once the epoch has ended and the oath has not been settled yet.
-  const showSettle = epochEnded && !settled;
-  // Claim once the oath is in a settled/terminal distributed state.
-  const showClaim = settled;
+  const oathId = oath.oathId;
+  const onchain = !!oath.onchain;
 
-  // Nothing actionable: still show the bar with a neutral note while live, but
-  // drop it entirely when nothing is pending and the user can do nothing.
-  const hasAction = showMarkBreach || showSettle || showClaim;
-  if (!hasAction && resolved) return null;
+  // Compute gating conditions client-side (after mount to avoid hydration mismatch)
+  const now = mounted ? Date.now() : 0;
+  const epochEnded = now >= oath.epochEndMs;
+  const drawdownFloor = oath.startingEquity * (1 - oath.dims.maxDrawdownBps / 10_000);
+  const equityBreached = oath.currentEquity < drawdownFloor;
+
+  const isActive = oath.status === "Active";
+  const isResolved = oath.status !== "Active";
+  const isSettled = oath.status === "Settled";
+
+  const showMarkBreach = mounted && onchain && isActive && equityBreached;
+  const showSettle = mounted && onchain && epochEnded && !isSettled;
+  const showClaim = onchain && isSettled && !!account;
+
+  // Fetch the wallet's positions for this oath (only when settled and wallet connected)
+  const { data: positions, refetch: refetchPositions } = useQuery({
+    queryKey: ["ownedPositions", account?.address ?? ""],
+    queryFn: () => fetchOwnedPositions(client, account!.address),
+    enabled: !!account && showClaim,
+    staleTime: 30_000,
+  });
+
+  const myPosition = positions?.find(
+    (p) => p.oathId === oathId && !p.claimed
+  );
+
+  const hasAction = showMarkBreach || showSettle || (showClaim && !!myPosition);
+  if (!hasAction && isResolved && mounted) return null;
+
+  // Refetch helpers
+  const invalidateOath = () => {
+    queryClient.invalidateQueries({ queryKey: ["oath", oathId] });
+    queryClient.invalidateQueries({ queryKey: ["oaths"] });
+    queryClient.invalidateQueries({ queryKey: ["sentimentSeries", oathId] });
+  };
+
+  const handleMarkBreach = () => {
+    if (!account || pending) return;
+    setPending(true);
+    setTxError(null);
+    setTxDigest(null);
+    signAndExecute(
+      { transaction: buildMarkBreachPtb(oathId) },
+      {
+        onSuccess: async ({ digest }) => {
+          await client.waitForTransaction({ digest });
+          setTxDigest(digest);
+          setPending(false);
+          invalidateOath();
+        },
+        onError: (err) => {
+          const msg = err instanceof Error ? err.message : String(err);
+          const isNotBreached =
+            msg.includes("MoveAbort") && msg.includes("12");
+          setTxError(
+            isNotBreached
+              ? "Equity is not below the drawdown floor on-chain."
+              : msg
+          );
+          setPending(false);
+        },
+      }
+    );
+  };
 
   const confirmSettle = () => {
+    if (!account || pending) return;
     setPending(true);
-    // Mock: settlement is the on-chain tx the screen would dispatch here.
-    setTimeout(() => {
-      setPending(false);
-      setConfirmOpen(false);
-      setSettled(true);
-    }, 600);
+    setTxError(null);
+    setTxDigest(null);
+    signAndExecute(
+      { transaction: buildSettlePtb(oathId) },
+      {
+        onSuccess: async ({ digest }) => {
+          await client.waitForTransaction({ digest });
+          setTxDigest(digest);
+          setPending(false);
+          setConfirmOpen(false);
+          invalidateOath();
+        },
+        onError: (err) => {
+          const msg = err instanceof Error ? err.message : String(err);
+          const epochNotOver =
+            msg.includes("MoveAbort") && msg.includes("5");
+          setTxError(
+            epochNotOver
+              ? "Epoch has not ended yet. Try again after the countdown."
+              : msg
+          );
+          setPending(false);
+          setConfirmOpen(false);
+        },
+      }
+    );
   };
+
+  const handleClaim = () => {
+    if (!account || !myPosition || pending) return;
+    setPending(true);
+    setTxError(null);
+    setTxDigest(null);
+    const tx =
+      myPosition.side === "Believer"
+        ? buildBelieverClaimPtb(myPosition.positionId, oathId)
+        : buildDoubterClaimPtb(myPosition.positionId, oathId);
+    signAndExecute(
+      { transaction: tx },
+      {
+        onSuccess: async ({ digest }) => {
+          await client.waitForTransaction({ digest });
+          setTxDigest(digest);
+          setPending(false);
+          refetchPositions();
+          invalidateOath();
+        },
+        onError: (err) => {
+          const msg = err instanceof Error ? err.message : String(err);
+          setTxError(msg);
+          setPending(false);
+        },
+      }
+    );
+  };
+
+  // Determine outcome for the SettleConfirm modal
+  const outcome: "Kept" | "Broken" =
+    oath.status === "Settled" || oath.status === "Broken"
+      ? oath.breachReason
+        ? "Broken"
+        : "Kept"
+      : equityBreached
+      ? "Broken"
+      : "Kept";
 
   return (
     <>
@@ -73,65 +187,108 @@ export default function DetailActionBar({
           borderTop: "1px solid var(--bone-200)",
         }}
       >
-        <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between gap-4">
-          <p
-            className="font-mono"
-            style={{ fontSize: "0.65rem", color: "var(--bone-600)" }}
-          >
-            {breachFlagged && oath.status === "Active"
-              ? "Breach recorded on-chain. The oath can be settled once the epoch ends."
-              : showMarkBreach || showSettle
+        <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex flex-col gap-1 min-w-0">
+            <p
+              className="font-mono"
+              style={{ fontSize: "0.65rem", color: "var(--bone-600)" }}
+            >
+              {!account
+                ? "Connect a wallet to take action."
+                : !onchain
+                ? "Demo oath — actions are not available."
+                : txDigest
+                ? "Transaction confirmed."
+                : showMarkBreach || showSettle
                 ? "Permissionless: anyone can trigger this on-chain."
-                : showClaim
-                  ? "Distribution is final and settled on-chain."
-                  : "No action available yet. Actions appear once valid."}
-          </p>
+                : showClaim && myPosition
+                ? "Distribution is final and settled on-chain."
+                : "No action available yet. Actions appear once valid."}
+            </p>
+            {txError && (
+              <p
+                className="font-mono"
+                style={{ fontSize: "0.65rem", color: "var(--coral-deep)" }}
+              >
+                {txError}
+              </p>
+            )}
+            {txDigest && (
+              <p className="font-mono" style={{ fontSize: "0.65rem", color: "var(--sage-deep)" }}>
+                <a
+                  href={explorerTx(txDigest)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ textDecoration: "underline" }}
+                >
+                  View tx ↗
+                </a>
+              </p>
+            )}
+          </div>
 
-          <div className="flex items-center gap-3">
-            {showMarkBreach && (
+          <div className="flex items-center gap-3 flex-shrink-0">
+            {!onchain && (
+              <span
+                className="font-mono"
+                style={{ fontSize: "0.65rem", color: "var(--bone-600)" }}
+              >
+                Demo oath
+              </span>
+            )}
+
+            {showMarkBreach && onchain && (
               <button
                 type="button"
                 className="btn-secondary"
+                disabled={pending || !account}
                 style={{
                   color: "var(--coral-deep)",
                   borderColor: "var(--coral-deep)",
+                  opacity: pending ? 0.6 : 1,
+                  cursor: pending ? "not-allowed" : "pointer",
                 }}
-                onClick={() => setBreachFlagged(true)}
+                onClick={handleMarkBreach}
               >
-                Mark breach
+                {pending ? "Marking..." : "Mark breach"}
               </button>
             )}
 
-            {showSettle && (
+            {showSettle && onchain && (
               <button
                 type="button"
                 className="btn-primary"
+                disabled={pending || !account}
+                style={{
+                  opacity: pending ? 0.6 : 1,
+                  cursor: pending ? "not-allowed" : "pointer",
+                }}
                 onClick={() => setConfirmOpen(true)}
               >
-                Settle oath
+                {pending ? "Settling..." : "Settle epoch"}
               </button>
             )}
 
-            {showClaim && (
+            {showClaim && onchain && myPosition && (
               <button
                 type="button"
                 className="btn-primary"
+                disabled={pending}
                 style={{
-                  background: claimed ? "var(--sage-deep)" : undefined,
-                  cursor: claimed ? "default" : "pointer",
-                  opacity: claimed ? 0.85 : 1,
+                  opacity: pending ? 0.6 : 1,
+                  cursor: pending ? "not-allowed" : "pointer",
                 }}
-                disabled={claimed}
-                onClick={() => setClaimed(true)}
+                onClick={handleClaim}
               >
-                {claimed ? "Payout claimed" : "Claim payout"}
+                {pending
+                  ? "Claiming..."
+                  : `Claim payout (${myPosition.side})`}
               </button>
             )}
           </div>
         </div>
       </div>
 
-      {/* Irreversible settle confirm — the one modal the app justifies. */}
       <SettleConfirm
         oath={oath}
         outcome={outcome}

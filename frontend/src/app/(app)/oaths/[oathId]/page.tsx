@@ -14,9 +14,12 @@ import AttestationFeed from "@/components/AttestationFeed";
 import RoleBadge from "@/components/RoleBadge";
 import StakePanel from "@/components/StakePanel";
 import SettlePreview from "@/components/SettlePreview";
+import AttestPanel from "@/components/AttestPanel";
+import LiveAttestations from "./LiveAttestations";
 
 import DetailActionBar from "./DetailActionBar";
 import LiveSentiment from "./LiveSentiment";
+import LiveDetail from "./LiveDetail";
 
 /**
  * Oath detail — /oaths/[oathId]
@@ -230,6 +233,9 @@ export default async function OathDetailPage({
           )}
         </div>
       </header>
+
+      {/* Live pool strip — client overlay for on-chain oaths, shows after first paint */}
+      {oath.onchain && <LiveDetail oathId={oath.oathId} fallback={oath} />}
 
       {/* Two-column body */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -557,8 +563,15 @@ export default async function OathDetailPage({
                 fills
               </span>
             </div>
-            <AttestationFeed rows={oath.attestations} now={NOW} />
+            {oath.onchain ? (
+              <LiveAttestations oathId={oath.oathId} />
+            ) : (
+              <AttestationFeed rows={oath.attestations} now={NOW} />
+            )}
           </section>
+
+          {/* Attestation panel — bound exec wallet only, client component */}
+          <AttestPanel oath={oath} />
 
           {/* Stakers — both sides of the market, as pools */}
           <section
@@ -640,13 +653,7 @@ export default async function OathDetailPage({
       </div>
 
       {/* Sticky action bar — Mark Breach / Settle / Claim, absent until valid. */}
-      <DetailActionBar
-        oath={oath}
-        outcome={outcome}
-        breached={oath.currentEquity < drawdownFloor(oath)}
-        epochEnded={NOW >= oath.epochEndMs}
-        resolved={resolved}
-      />
+      <DetailActionBar oath={oath} />
     </div>
   );
 }

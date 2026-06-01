@@ -2,8 +2,11 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useSuiClient } from "@mysten/dapp-kit";
+import { useQuery } from "@tanstack/react-query";
 import OathCard from "@/components/OathCard";
 import { OATHS, type Oath, type OathStatus } from "@/lib/mock";
+import { fetchAllOaths } from "@/lib/chain";
 
 /* ────────────────────────────────────────────────────────────────
    Browse (/oaths) — the marketplace.
@@ -13,11 +16,9 @@ import { OATHS, type Oath, type OathStatus } from "@/lib/mock";
    like an orderbook, not an NFT gallery. SentimentBar (rendered by OathCard
    on Active oaths) is the scan anchor.
 
-   This is a client module because tab / status / sort all drive the visible
-   set. OathCard and its children are presentational (the only live atom,
-   Countdown, self-ticks), so they bundle fine inside this client tree. No
-   Date.now() in render: every sort key is a static field, Countdown owns its
-   own clock.
+   Data: live from chain via useSuiClient + react-query, with the static
+   OATHS snapshot as initialData so first paint is populated before the
+   live fetch resolves. Newly minted oaths appear after the next refetch.
    ──────────────────────────────────────────────────────────────── */
 
 type Vertical = "Trading" | "Uptime" | "Behavior";
@@ -51,8 +52,27 @@ export default function OathsPage() {
   const [status, setStatus] = useState<StatusKey>("all");
   const [sort, setSort] = useState<SortKey>("newest");
 
+  const client = useSuiClient();
+
+  const {
+    data: liveOaths,
+    isLoading,
+    isFetching,
+    refetch,
+    dataUpdatedAt,
+  } = useQuery({
+    queryKey: ["oaths"],
+    queryFn: () => fetchAllOaths(client),
+    initialData: OATHS,
+    staleTime: 30_000,
+  });
+
+  // Use live data if available, else static snapshot
+  const allOaths = liveOaths ?? OATHS;
+  const isLive = !isLoading && dataUpdatedAt > 0;
+
   const oaths = useMemo(() => {
-    let list = OATHS.filter((o) => o.oathType === `${tab}Oath`);
+    let list = allOaths.filter((o) => o.oathType === `${tab}Oath`);
     if (status !== "all") list = list.filter((o) => o.status === status);
 
     const sorted = [...list];
@@ -71,23 +91,49 @@ export default function OathsPage() {
     }
     // "newest": OATHS is already in newest-first source order; leave as-is.
     return sorted;
-  }, [tab, status, sort]);
+  }, [allOaths, tab, status, sort]);
 
   return (
     <div className="mx-auto max-w-[1280px] px-6 lg:px-8">
       {/* Page header */}
       <header className="pt-10 pb-6">
-        <div
-          className="font-mono"
-          style={{
-            fontSize: "0.6875rem",
-            letterSpacing: "0.18em",
-            textTransform: "uppercase",
-            color: "var(--bone-600)",
-            marginBottom: "0.5rem",
-          }}
-        >
-          Marketplace
+        <div className="flex items-center justify-between flex-wrap gap-3 mb-1">
+          <div
+            className="font-mono"
+            style={{
+              fontSize: "0.6875rem",
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              color: "var(--bone-600)",
+            }}
+          >
+            Marketplace
+          </div>
+          <div className="flex items-center gap-3">
+            <span
+              className="font-mono"
+              style={{ fontSize: "0.6rem", color: "var(--bone-600)" }}
+            >
+              {isLive ? "Live · testnet" : "Snapshot"}
+            </span>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              disabled={isFetching}
+              className="font-mono"
+              style={{
+                fontSize: "0.6rem",
+                color: isFetching ? "var(--bone-400)" : "var(--bone-600)",
+                background: "transparent",
+                border: "1px solid var(--bone-200)",
+                borderRadius: 5,
+                padding: "0.2rem 0.6rem",
+                cursor: isFetching ? "not-allowed" : "pointer",
+              }}
+            >
+              {isFetching ? "Refreshing..." : "Refresh"}
+            </button>
+          </div>
         </div>
         <h1
           className="font-sans"
@@ -117,7 +163,7 @@ export default function OathsPage() {
         aria-label="Oath verticals"
       >
         {VERTICALS.map((v) => {
-          const count = OATHS.filter((o) => o.oathType === `${v}Oath`).length;
+          const count = allOaths.filter((o) => o.oathType === `${v}Oath`).length;
           const selected = tab === v;
           return (
             <button

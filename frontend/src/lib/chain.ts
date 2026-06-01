@@ -64,6 +64,7 @@ export function mapOath(content: unknown): Oath | null {
     attestations: [],
     onchain: true,
     explorerUrl: explorerObject(oathId),
+    execAddr: f.scope?.fields?.exec_addr as string | undefined,
   };
 }
 
@@ -85,6 +86,48 @@ async function getMinted(client: SuiClient): Promise<{ oathId: string; promiser:
   return out;
 }
 
+/** OathSettled outcomes (final_status: 1=Kept, 2=Broken). No promiser on the event. */
+async function getSettled(client: SuiClient): Promise<{ oathId: string; finalStatus: number }[]> {
+  const out: { oathId: string; finalStatus: number }[] = [];
+  let cursor: { txDigest: string; eventSeq: string } | null = null;
+  for (;;) {
+    const page = await client.queryEvents({
+      query: { MoveEventType: `${CHAIN.packageId}::oath::OathSettled` },
+      cursor: cursor ?? undefined, limit: 50, order: "ascending",
+    });
+    for (const e of page.data) {
+      const j = e.parsedJson as { oath_id: string; final_status: number };
+      out.push({ oathId: j.oath_id, finalStatus: Number(j.final_status) });
+    }
+    if (!page.hasNextPage || !page.nextCursor) break;
+    cursor = page.nextCursor;
+  }
+  return out;
+}
+
+/** Per-operator kept/broken track record: join OathMinted(promiser) with OathSettled(status). */
+function buildStandings(
+  minted: { oathId: string; promiser: string }[],
+  settled: { oathId: string; finalStatus: number }[],
+): Map<string, { kept: number; broken: number }> {
+  const oathToPromiser = new Map(minted.map((m) => [m.oathId, m.promiser]));
+  const standings = new Map<string, { kept: number; broken: number }>();
+  for (const s of settled) {
+    const promiser = oathToPromiser.get(s.oathId);
+    if (!promiser) continue;
+    const cur = standings.get(promiser) ?? { kept: 0, broken: 0 };
+    if (s.finalStatus === 1) cur.kept++;
+    else if (s.finalStatus === 2) cur.broken++;
+    standings.set(promiser, cur);
+  }
+  return standings;
+}
+
+export async function fetchStandings(client: SuiClient): Promise<Map<string, { kept: number; broken: number }>> {
+  const [minted, settled] = await Promise.all([getMinted(client), getSettled(client)]);
+  return buildStandings(minted, settled);
+}
+
 async function readOaths(client: SuiClient, ids: string[]): Promise<Oath[]> {
   const oaths: Oath[] = [];
   for (let i = 0; i < ids.length; i += 50) {
@@ -97,10 +140,12 @@ async function readOaths(client: SuiClient, ids: string[]): Promise<Oath[]> {
   return oaths;
 }
 
-/** All oaths in the deployment, newest epoch-end first. */
+/** All oaths in the deployment, newest epoch-end first, with real operator Standing. */
 export async function fetchAllOaths(client: SuiClient): Promise<Oath[]> {
-  const minted = await getMinted(client);
+  const [minted, settled] = await Promise.all([getMinted(client), getSettled(client)]);
   const oaths = await readOaths(client, minted.map((m) => m.oathId));
+  const standings = buildStandings(minted, settled);
+  for (const o of oaths) o.standing = standings.get(o.promiser) ?? { kept: 0, broken: 0 };
   return oaths.sort((a, b) => b.epochEndMs - a.epochEndMs);
 }
 
@@ -152,6 +197,40 @@ export async function fetchOwnedPositions(client: SuiClient, owner: string): Pro
     }
   }
   return out;
+}
+
+/** Live attested fills for an oath, newest-first, from TradeAttested events. */
+export async function fetchAttestations(
+  client: SuiClient,
+  oathId: string,
+): Promise<import("./mock").AttestationRow[]> {
+  const rows: import("./mock").AttestationRow[] = [];
+  let cursor: { txDigest: string; eventSeq: string } | null = null;
+  for (;;) {
+    const page = await client.queryEvents({
+      query: { MoveEventType: `${CHAIN.packageId}::attestation::TradeAttested` },
+      cursor: cursor ?? undefined, limit: 50, order: "descending",
+    });
+    for (const e of page.data) {
+      const j = e.parsedJson as {
+        oath_id: string; venue_tx_hash: number[]; asset: number[];
+        pnl_delta: string; pnl_negative: boolean; equity_after: string; notional: string; timestamp_ms: string;
+      };
+      if (j.oath_id !== oathId) continue;
+      const pnl = Number(j.pnl_delta) * (j.pnl_negative ? -1 : 1);
+      rows.push({
+        txHash: ascii(j.venue_tx_hash),
+        asset: ascii(j.asset),
+        pnlDelta: pnl,
+        equityAfter: Number(j.equity_after),
+        notional: Number(j.notional),
+        timestampMs: Number(j.timestamp_ms),
+      });
+    }
+    if (!page.hasNextPage || !page.nextCursor) break;
+    cursor = page.nextCursor;
+  }
+  return rows;
 }
 
 /** Cumulative believer/doubter pool series for an oath, from stake events (Polymarket-style). */

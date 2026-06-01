@@ -77,7 +77,7 @@ async function main() {
 
   // 1. Fund role wallets with SUI gas from the deployer (one PTB).
   const fund = new Transaction();
-  const gasEach = 60_000_000n; // 0.06 SUI — each role only signs 1-2 small txns
+  const gasEach = 40_000_000n; // trimmed for low deployer balance
   const [c1, c2, c3, c4] = fund.splitCoins(fund.gas, [gasEach, gasEach, gasEach, gasEach]);
   fund.transferObjects([c1], addrs.oathkeeper);
   fund.transferObjects([c2], addrs.believer);

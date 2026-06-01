@@ -116,3 +116,75 @@ export function buildStakeAgainstPtb(oathId: string, amount: bigint): Transactio
   });
   return tx;
 }
+
+/** Permissionless: settle an oath whose epoch has ended. */
+export function buildSettlePtb(oathId: string): Transaction {
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${CHAIN.packageId}::oath::settle_epoch`,
+    typeArguments: T(),
+    arguments: [tx.object(oathId), tx.object(CHAIN.registryId), tx.object(CHAIN.clockId)],
+  });
+  return tx;
+}
+
+/** Permissionless: trip the drawdown breach when current equity is below the floor. */
+export function buildMarkBreachPtb(oathId: string): Transaction {
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${CHAIN.packageId}::oath::mark_breach`,
+    typeArguments: T(),
+    arguments: [tx.object(oathId), tx.object(CHAIN.clockId)],
+  });
+  return tx;
+}
+
+/** Believer claims their settled payout. `positionId` is the owned BelieverPosition. */
+export function buildBelieverClaimPtb(positionId: string, oathId: string): Transaction {
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${CHAIN.packageId}::believer::claim_payout`,
+    typeArguments: T(),
+    arguments: [tx.object(positionId), tx.object(oathId)],
+  });
+  return tx;
+}
+
+/** Doubter claims their settled payout. `positionId` is the owned DoubterPosition. */
+export function buildDoubterClaimPtb(positionId: string, oathId: string): Transaction {
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${CHAIN.packageId}::doubter::claim_payout`,
+    typeArguments: T(),
+    arguments: [tx.object(positionId), tx.object(oathId)],
+  });
+  return tx;
+}
+
+/** Attest a trade fill. MUST be signed by the bound exec_addr (the oath's exec wallet). */
+export function buildRecordTradePtb(args: {
+  oathId: string;
+  venueTxHash: string;
+  asset: string;
+  pnlDelta: bigint;
+  pnlNegative: boolean;
+  equityAfter: bigint;
+  notional: bigint;
+}): Transaction {
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${CHAIN.packageId}::attestation::record_trade`,
+    typeArguments: T(),
+    arguments: [
+      tx.object(args.oathId),
+      tx.pure.vector("u8", bytes(args.venueTxHash)),
+      tx.pure.vector("u8", bytes(args.asset)),
+      tx.pure.u64(args.pnlDelta),
+      tx.pure.bool(args.pnlNegative),
+      tx.pure.u64(args.equityAfter),
+      tx.pure.u64(args.notional),
+      tx.object(CHAIN.clockId),
+    ],
+  });
+  return tx;
+}
