@@ -178,6 +178,26 @@ export function buildDoubterClaimPtb(positionId: string, oathId: string): Transa
   return tx;
 }
 
+/**
+ * File a dispute against a recorded attestation. `venueTxHash` is the attested fill the
+ * reconciler found unbacked; `evidence` is an opaque reference (e.g. a Walrus blob id of the
+ * reconciliation report). Works against both the &Oath (event-only) and &mut Oath (durable
+ * dispute record) signatures — the PTB passes the shared object either way.
+ */
+export function buildDisputePtb(oathId: string, venueTxHash: string, evidence: string): Transaction {
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${P()}::attestation::dispute_attestation`,
+    typeArguments: T(),
+    arguments: [
+      tx.object(oathId),
+      tx.pure.vector('u8', bytes(venueTxHash)),
+      tx.pure.vector('u8', bytes(evidence)),
+    ],
+  });
+  return tx;
+}
+
 /** Mint mock USDC to a recipient (signed by the TreasuryCap holder = deployer). */
 export function buildMintUsdcPtb(amount: bigint, recipient: string): Transaction {
   const tx = new Transaction();
