@@ -1,0 +1,146 @@
+{
+  "network": "testnet",
+  "packageId": "0xae9da7ca311e9388995875ee5e557b270e2fae4d6f993555daa67042575598f9",
+  "coinType": "0xae9da7ca311e9388995875ee5e557b270e2fae4d6f993555daa67042575598f9::usdc::USDC",
+  "oaths": [
+    {
+      "oathId": "0x651aaa3d9a0b84a1caceecb86fae8fd6e40aa0e38e8266be443045bc9cea2624",
+      "promiser": "0xdf5802c77cec343a3516600570f089cbdb63877608fde9579fceb8df1c8cfaee",
+      "promiserAlias": "OP-DF58",
+      "client": "0xed6b0fde73c7f4ce3a0c00d52ab9b71599978a472dd46342808a2514a463ed71",
+      "oathType": "TradingOath",
+      "bondAmount": 50000,
+      "clientClaim": 20000,
+      "clientClaimText": "Holds drawdown at or under 10%, at least 30 trades, at least 3% net PnL on BTC-PERP/ETH-PERP/SOL-PERP this epoch.",
+      "dims": {
+        "maxDrawdownBps": 1000,
+        "minTrades": 30,
+        "minPnlBps": 300,
+        "minVolumeUsdc": 100000
+      },
+      "totalBelieverStakes": 8000,
+      "totalDoubterStakes": 900,
+      "currentEquity": 100000,
+      "startingEquity": 100000,
+      "tradeCount": 0,
+      "cumulativeVolume": 0,
+      "epochEndMs": 1780908984012,
+      "status": "Active",
+      "standing": {
+        "kept": 0,
+        "broken": 0
+      },
+      "assets": [
+        "BTC-PERP",
+        "ETH-PERP",
+        "SOL-PERP"
+      ],
+      "attestations": [],
+      "onchain": true,
+      "explorerUrl": "https://suiscan.xyz/testnet/object/0x651aaa3d9a0b84a1caceecb86fae8fd6e40aa0e38e8266be443045bc9cea2624"
+    },
+    {
+      "oathId": "0x1dc856bee936ce22e1d7835fe2a18b77040b06bdd18138fba280e4a5386db2b8",
+      "promiser": "0xdf5802c77cec343a3516600570f089cbdb63877608fde9579fceb8df1c8cfaee",
+      "promiserAlias": "OP-DF58",
+      "client": "0xed6b0fde73c7f4ce3a0c00d52ab9b71599978a472dd46342808a2514a463ed71",
+      "oathType": "TradingOath",
+      "bondAmount": 25000,
+      "clientClaim": 12000,
+      "clientClaimText": "Holds drawdown at or under 15%, at least 20 trades, at least 8% net PnL on BTC-PERP this epoch.",
+      "dims": {
+        "maxDrawdownBps": 1500,
+        "minTrades": 20,
+        "minPnlBps": 800,
+        "minVolumeUsdc": 50000
+      },
+      "totalBelieverStakes": 4200,
+      "totalDoubterStakes": 1800,
+      "currentEquity": 100000,
+      "startingEquity": 100000,
+      "tradeCount": 0,
+      "cumulativeVolume": 0,
+      "epochEndMs": 1780908949025,
+      "status": "Active",
+      "standing": {
+        "kept": 0,
+        "broken": 0
+      },
+      "assets": [
+        "BTC-PERP"
+      ],
+      "attestations": [],
+      "onchain": true,
+      "explorerUrl": "https://suiscan.xyz/testnet/object/0x1dc856bee936ce22e1d7835fe2a18b77040b06bdd18138fba280e4a5386db2b8"
+    },
+    {
+      "oathId": "0x0bdf5ce234a5bc3438287d31dc271d28e2e8b840662ce8128ca58c401d021200",
+      "promiser": "0xdf5802c77cec343a3516600570f089cbdb63877608fde9579fceb8df1c8cfaee",
+      "promiserAlias": "OP-DF58",
+      "client": "0xed6b0fde73c7f4ce3a0c00d52ab9b71599978a472dd46342808a2514a463ed71",
+      "oathType": "TradingOath",
+      "bondAmount": 10000,
+      "clientClaim": 5000,
+      "clientClaimText": "Holds drawdown at or under 25%, at least 10 trades, at least 4% net PnL on ETH-PERP/BTC-PERP this epoch.",
+      "dims": {
+        "maxDrawdownBps": 2500,
+        "minTrades": 10,
+        "minPnlBps": 400,
+        "minVolumeUsdc": 0
+      },
+      "totalBelieverStakes": 1500,
+      "totalDoubterStakes": 2600,
+      "currentEquity": 100000,
+      "startingEquity": 100000,
+      "tradeCount": 0,
+      "cumulativeVolume": 0,
+      "epochEndMs": 1780563365134,
+      "status": "Active",
+      "standing": {
+        "kept": 0,
+        "broken": 0
+      },
+      "assets": [
+        "ETH-PERP",
+        "BTC-PERP"
+      ],
+      "attestations": [],
+      "onchain": true,
+      "explorerUrl": "https://suiscan.xyz/testnet/object/0x0bdf5ce234a5bc3438287d31dc271d28e2e8b840662ce8128ca58c401d021200"
+    },
+    {
+      "oathId": "0x0e581fcac69e6be531875a18ef3e483f47fd6eb064b6cd3fd9a9b90ed23eaf5b",
+      "promiser": "0xdf5802c77cec343a3516600570f089cbdb63877608fde9579fceb8df1c8cfaee",
+      "promiserAlias": "OP-DF58",
+      "client": "0xed6b0fde73c7f4ce3a0c00d52ab9b71599978a472dd46342808a2514a463ed71",
+      "oathType": "TradingOath",
+      "bondAmount": 8000,
+      "clientClaim": 6000,
+      "clientClaimText": "Holds drawdown at or under 35%, at least 50 trades, at least 12% net PnL on SOL-PERP this epoch.",
+      "dims": {
+        "maxDrawdownBps": 3500,
+        "minTrades": 50,
+        "minPnlBps": 1200,
+        "minVolumeUsdc": 25000
+      },
+      "totalBelieverStakes": 600,
+      "totalDoubterStakes": 3400,
+      "currentEquity": 100000,
+      "startingEquity": 100000,
+      "tradeCount": 0,
+      "cumulativeVolume": 0,
+      "epochEndMs": 1780390600018,
+      "status": "Active",
+      "standing": {
+        "kept": 0,
+        "broken": 0
+      },
+      "assets": [
+        "SOL-PERP"
+      ],
+      "attestations": [],
+      "onchain": true,
+      "explorerUrl": "https://suiscan.xyz/testnet/object/0x0e581fcac69e6be531875a18ef3e483f47fd6eb064b6cd3fd9a9b90ed23eaf5b"
+    }
+  ]
+}

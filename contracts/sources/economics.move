@@ -1,95 +1,57 @@
-/// LP pool + settlement payout math.
+/// Settlement split constants and payout helpers.
 ///
-/// Week 1 Day 5 lands the bodies. This file ships the LPPool type and entry skeletons
-/// so `oath::settle_epoch` has a stable signature against `&mut LPPool<T>` from Day 2.
+/// v2 economics: 5-role model (Oathkeeper, Client, Believer, Doubter, Platform).
+/// No LP pool — Believers replace the LP role as active market participants.
 ///
-/// Payout rules (from README):
-///   - Kept:    bond → Oathkeeper. Doubter stakes split 60% Oathkeeper / 40% LPPool.
-///   - Broken:  bond pays open doubter claims first (claim order), residual → LPPool.
-///              Oathkeeper receives zero. Doubter stakes follow same Kept split? No —
-///              on Broken, Doubter stakes are returned to Doubters along with claim payout.
-///              (Lock semantics Day 5.)
-///   - Conservation: Σ inflows = Σ outflows across every settlement. Protocol skims zero.
+/// Settlement splits (loser stakes):
+///   10% → Platform
+///   20% → Secondary beneficiary (Oathkeeper on Kept, Client on Broken)
+///   70% → Winners (pro-rata by stake size)
+///
+/// Bond on Kept: 100% → Oathkeeper
+/// Bond on Broken: client_claim → Client, residual → Platform
+///
+/// Conservation: Σ inflows = Σ outflows including Platform's 10%. Fully disclosed fee.
 module oathkeeper::economics;
 
-use sui::balance::Balance;
-use sui::coin::Coin;
-
-// === Errors ===
-const EZeroDeposit: u64 = 0;
-const EInsufficientLPShares: u64 = 1;
-const ENotSettler: u64 = 2;
-
-// === Split constants (basis points) ===
-const KEPT_PROMISER_BPS: u64 = 6000;
-const KEPT_LP_BPS: u64 = 4000;
-
-// === LPPool shared object ===
-
-public struct LPPool<phantom T> has key {
-    id: UID,
-    reserves: Balance<T>,
-    total_shares: u64,
-}
-
-/// LP share receipt (owned). Burn to redeem proportional reserves.
-public struct LPShare<phantom T> has key, store {
-    id: UID,
-    pool_id: ID,
-    shares: u64,
-}
-
-// === Events ===
-
-public struct LPDeposit has copy, drop {
-    pool_id: ID,
-    provider: address,
-    amount: u64,
-    shares_minted: u64,
-}
-
-public struct LPRedeem has copy, drop {
-    pool_id: ID,
-    provider: address,
-    shares_burned: u64,
-    amount: u64,
-}
-
-public struct SettlementPayout has copy, drop {
-    oath_id: ID,
-    promiser_amount: u64,
-    lp_amount: u64,
-    doubters_amount: u64,
-    outcome: u8,
-}
-
-// === Init ===
-
-fun init(ctx: &mut TxContext) { abort 0 }
-
-// === LP entry points ===
-
-public entry fun deposit_lp<T>(
-    pool: &mut LPPool<T>,
-    deposit: Coin<T>,
-    ctx: &mut TxContext,
-) { abort 0 }
-
-public entry fun redeem_lp<T>(
-    pool: &mut LPPool<T>,
-    share: LPShare<T>,
-    ctx: &mut TxContext,
-) { abort 0 }
-
-// === Package-internal: called by oath::settle_epoch ===
-
-public(package) fun deposit_premium<T>(
-    pool: &mut LPPool<T>,
-    premium: Balance<T>,
-) { abort 0 }
+// === Split constants (basis points out of 10000) ===
+const PLATFORM_BPS: u64 = 1000;
+const SECONDARY_BPS: u64 = 2000;
+const WINNER_BPS: u64 = 7000;
 
 // === Accessors ===
 
-public fun reserves_value<T>(p: &LPPool<T>): u64 { abort 0 }
-public fun total_shares<T>(p: &LPPool<T>): u64 { abort 0 }
-public fun share_value<T>(s: &LPShare<T>): u64 { abort 0 }
+public fun platform_bps(): u64 { PLATFORM_BPS }
+public fun secondary_bps(): u64 { SECONDARY_BPS }
+public fun winner_bps(): u64 { WINNER_BPS }
+
+/// Compute the three-way split on a total amount.
+/// Returns (platform_amount, secondary_amount, winner_amount).
+/// Uses subtraction for the winner share to keep conservation exact on rounding.
+public fun compute_split(total: u64): (u64, u64, u64) {
+    let platform = (((total as u128) * (PLATFORM_BPS as u128) / 10000) as u64);
+    let secondary = (((total as u128) * (SECONDARY_BPS as u128) / 10000) as u64);
+    let winner = total - platform - secondary;
+    (platform, secondary, winner)
+}
+
+#[test]
+fun split_sums_to_total() {
+    let (p, s, w) = compute_split(10000);
+    assert!(p + s + w == 10000);
+    assert!(p == 1000);
+    assert!(s == 2000);
+    assert!(w == 7000);
+}
+
+#[test]
+fun split_handles_odd_amounts() {
+    let (p, s, w) = compute_split(1333);
+    assert!(p + s + w == 1333);
+}
+
+#[test]
+fun split_handles_zero() {
+    let (p, s, w) = compute_split(0);
+    assert!(p == 0 && s == 0 && w == 0);
+}

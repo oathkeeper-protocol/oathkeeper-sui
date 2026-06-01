@@ -1,0 +1,178 @@
+@import "tailwindcss";
+
+/* ─── Design tokens ─────────────────────────────────────────────────────────── */
+:root {
+  /* Canvas — warm cream */
+  --cream:        oklch(0.96 0.03 85);    /* warm cream base */
+  --cream-deep:   oklch(0.93 0.03 85);    /* recessed surfaces */
+  --white:        oklch(0.99 0.005 85);   /* elevated cards */
+
+  /* Text — bone scale, warm-tinted */
+  --bone-950: oklch(0.15 0.02 60);
+  --bone-800: oklch(0.30 0.02 60);
+  --bone-600: oklch(0.45 0.02 60);
+  --bone-400: oklch(0.60 0.015 60);
+  --bone-300: oklch(0.72 0.01 60);
+  --bone-200: oklch(0.84 0.01 60);
+
+  /* Gold accent — saffron, brand authority */
+  --gold:       oklch(0.62 0.15 75);
+  --gold-light: oklch(0.72 0.12 75);
+  --gold-dim:   oklch(0.82 0.06 75);
+
+  /* Coral accent — doubt / breach / primary CTA */
+  --coral:       oklch(0.62 0.18 15);
+  --coral-light: oklch(0.72 0.14 15);
+
+  /* Steel — secondary, neutral-cool */
+  --steel:       oklch(0.55 0.02 250);
+  --steel-light: oklch(0.65 0.015 250);
+
+  /* Sage — Believer role */
+  --sage: oklch(0.58 0.12 145);
+
+  /* Deep text variants — for text on light backgrounds (cream/white) */
+  --gold-deep:   oklch(0.48 0.15 75);
+  --coral-deep:  oklch(0.52 0.18 15);
+  --sage-deep:   oklch(0.48 0.12 145);
+  --steel-deep:  oklch(0.46 0.02 250);
+  /* ink variants — darker, for text on LIGHT tinted chips (bone-200 / gold-dim) */
+  --gold-ink:    oklch(0.43 0.15 75);
+  --coral-ink:   oklch(0.46 0.18 15);
+
+  /* Semantic */
+  --background: var(--cream);
+  --foreground: var(--bone-950);
+  --muted:      var(--bone-600);
+  --subtle:     var(--bone-200);
+  --accent:     var(--gold);
+}
+
+/* Force light mode — no dark theme */
+@theme inline {
+  --color-background:   var(--background);
+  --color-foreground:   var(--foreground);
+  --color-muted:        var(--muted);
+  --color-subtle:       var(--subtle);
+  --color-accent:       var(--accent);
+  --color-cream:        var(--cream);
+  --color-cream-deep:   var(--cream-deep);
+  --color-white:        var(--white);
+  --color-bone-950:     var(--bone-950);
+  --color-bone-800:     var(--bone-800);
+  --color-bone-600:     var(--bone-600);
+  --color-bone-400:     var(--bone-400);
+  --color-bone-300:     var(--bone-300);
+  --color-bone-200:     var(--bone-200);
+  --color-gold:         var(--gold);
+  --color-gold-light:   var(--gold-light);
+  --color-gold-dim:     var(--gold-dim);
+  --color-coral:        var(--coral);
+  --color-coral-light:  var(--coral-light);
+  --color-steel:        var(--steel);
+  --color-steel-light:  var(--steel-light);
+  --color-sage:         var(--sage);
+  --color-gold-deep:    var(--gold-deep);
+  --color-coral-deep:   var(--coral-deep);
+  --color-sage-deep:    var(--sage-deep);
+  --color-steel-deep:   var(--steel-deep);
+  --color-gold-ink:     var(--gold-ink);
+  --color-coral-ink:    var(--coral-ink);
+  --font-sans: var(--font-figtree);
+  --font-mono: var(--font-source-code-pro);
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-figtree), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Interactive elements ──────────────────────────────────────────────────── */
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.375rem;
+  background: oklch(0.55 0.18 15);
+  color: oklch(0.99 0.005 85);
+  text-decoration: none;
+  transition: background 150ms ease-out;
+  border: none;
+  cursor: pointer;
+}
+.btn-primary:hover {
+  background: oklch(0.48 0.18 15);
+}
+
+.btn-primary-lg {
+  padding: 0.875rem 1.75rem;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: var(--bone-950);
+  border: 1px solid var(--bone-200);
+  text-decoration: none;
+  transition: border-color 150ms ease-out, background 150ms ease-out;
+  cursor: pointer;
+}
+.btn-secondary:hover {
+  border-color: var(--bone-400);
+  background: var(--cream-deep);
+}
+
+.btn-secondary-dark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  padding: 0.875rem 1.75rem;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: var(--bone-300);
+  border: 1px solid oklch(0.30 0.02 60);
+  text-decoration: none;
+  transition: border-color 150ms ease-out, color 150ms ease-out;
+  cursor: pointer;
+}
+.btn-secondary-dark:hover {
+  border-color: oklch(0.50 0.02 60);
+  color: var(--cream);
+}
+
+.nav-link {
+  font-size: 0.875rem;
+  color: var(--bone-600);
+  text-decoration: none;
+  transition: color 150ms ease-out;
+}
+.nav-link:hover {
+  color: var(--bone-950);
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
