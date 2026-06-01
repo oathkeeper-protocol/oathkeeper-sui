@@ -286,11 +286,55 @@ export default function OathsPage() {
           {oaths.length === 0 ? (
             <EmptyState tab={tab} status={status} />
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {oaths.map((oath) => (
-                <OathCard key={oath.oathId} oath={oath} />
-              ))}
-            </div>
+            <>
+              {/* Live testnet oaths render first and on their own. */}
+              {oaths.some((o) => o.onchain) && (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {oaths
+                    .filter((o) => o.onchain)
+                    .map((oath) => (
+                      <OathCard key={oath.oathId} oath={oath} />
+                    ))}
+                </div>
+              )}
+
+              {/* Demo/sample oaths are visibly separated so they can never be mistaken
+                  for live on-chain ones (audit honesty fix). */}
+              {oaths.some((o) => !o.onchain) && (
+                <>
+                  <div
+                    className="flex items-center gap-3 mt-8 mb-4"
+                    aria-hidden="false"
+                  >
+                    <span
+                      className="font-mono"
+                      style={{
+                        fontSize: "0.625rem",
+                        letterSpacing: "0.16em",
+                        textTransform: "uppercase",
+                        fontWeight: 600,
+                        color: "var(--bone-600)",
+                      }}
+                    >
+                      Sample oaths · demo data, not on-chain
+                    </span>
+                    <span
+                      style={{ flex: 1, height: 1, background: "var(--bone-200)" }}
+                    />
+                  </div>
+                  <div
+                    className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
+                    style={{ opacity: 0.78 }}
+                  >
+                    {oaths
+                      .filter((o) => !o.onchain)
+                      .map((oath) => (
+                        <OathCard key={oath.oathId} oath={oath} />
+                      ))}
+                  </div>
+                </>
+              )}
+            </>
           )}
         </div>
       </div>
