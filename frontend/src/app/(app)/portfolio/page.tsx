@@ -3,60 +3,33 @@
 /* ────────────────────────────────────────────────────────────────
    OATHKEEPER APP · Portfolio (/portfolio)
    Three sub-tabs: Oathkeeper · Believer · Doubter.
-   Client is passive — surfaced as a light notice, not a tab.
-
-   Data note: SELF_ADDRESS is a pure market participant. It owns no
-   oaths as promiser and is the Client on none, so the Oathkeeper tab
-   renders its teaching empty state and the Client notice reads 0.
-   The user's five POSITIONS drive the Believer / Doubter tabs.
-
-   5-role economics only (Oathkeeper / Client / Believer / Doubter /
-   Platform; loser stakes split 10/20/70). No LP / underwriter tab.
+   Reads LIVE on-chain data for the connected wallet.
+   If no wallet is connected, shows a prompt to connect.
    ──────────────────────────────────────────────────────────────── */
 
 import { useState } from "react";
 import Link from "next/link";
+import { useCurrentAccount, useSuiClient, ConnectButton } from "@mysten/dapp-kit";
+import { useQuery } from "@tanstack/react-query";
+
 import OathCard from "@/components/OathCard";
 import StatusBadge from "@/components/StatusBadge";
 import StandingBadge from "@/components/StandingBadge";
 import RoleBadge from "@/components/RoleBadge";
+import SentimentBar from "@/components/SentimentBar";
+
 import {
-  OATHS,
-  POSITIONS,
-  SELF_ADDRESS,
-  getOath,
-  type Oath,
-  type Position,
-} from "@/lib/mock";
+  fetchAllOaths,
+  fetchOathkeeperOaths,
+  fetchOwnedPositions,
+  type OwnedPosition,
+} from "@/lib/chain";
+import type { Oath } from "@/lib/mock";
 import { usdc } from "@/lib/format";
 
 type TabKey = "oathkeeper" | "believer" | "doubter";
 
-// ── Local helpers (screen-only; no new shared components) ────────────────────
-
-/** Absolute settlement date for history tables (DESIGN.md: tables use absolute). */
-const DATE_FMT = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-  hour12: false,
-  timeZone: "UTC",
-});
-function settledDate(ms: number): string {
-  return DATE_FMT.format(new Date(ms));
-}
-
-/** Verbatim outcome-derivation rule from the manifest. */
-function outcomeOf(oath: Oath): "Kept" | "Broken" {
-  if (oath.status === "Settled") return oath.breachReason ? "Broken" : "Kept";
-  return oath.status === "Broken" ? "Broken" : "Kept";
-}
-
-/** A position is settled once it carries a realized payout. */
-function isSettled(p: Position): boolean {
-  return p.payout !== undefined;
-}
+// ── Shared micro-components ──────────────────────────────────────────────────
 
 /** Section eyebrow — uppercase mono label above a block. */
 function Eyebrow({ children }: { children: React.ReactNode }) {
@@ -72,74 +45,6 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
       }}
     >
       {children}
-    </div>
-  );
-}
-
-/** Compact aggregate stat tile. */
-function StatTile({
-  label,
-  value,
-  unit,
-  tone = "default",
-}: {
-  label: string;
-  value: string;
-  unit?: string;
-  tone?: "default" | "win" | "loss";
-}) {
-  const color =
-    tone === "win"
-      ? "var(--sage-deep)"
-      : tone === "loss"
-        ? "var(--coral-deep)"
-        : "var(--bone-950)";
-  return (
-    <div
-      style={{
-        background: "var(--white)",
-        border: "1px solid var(--bone-200)",
-        borderRadius: 10,
-        padding: "0.875rem 1rem",
-      }}
-    >
-      <div
-        className="font-mono"
-        style={{
-          fontSize: "0.6rem",
-          letterSpacing: "0.12em",
-          textTransform: "uppercase",
-          fontWeight: 600,
-          color: "var(--bone-600)",
-          marginBottom: "0.375rem",
-        }}
-      >
-        {label}
-      </div>
-      <div
-        className="font-mono tabular-nums"
-        style={{
-          fontSize: "1.125rem",
-          fontWeight: 700,
-          color,
-          letterSpacing: "-0.01em",
-        }}
-      >
-        {value}
-        {unit && (
-          <span
-            style={{
-              fontSize: "0.65rem",
-              fontWeight: 500,
-              color: "var(--bone-600)",
-              letterSpacing: "0.08em",
-              marginLeft: 4,
-            }}
-          >
-            {unit}
-          </span>
-        )}
-      </div>
     </div>
   );
 }
@@ -190,189 +95,18 @@ function EmptyState({
   );
 }
 
-// ── Settled-history table (shared shape across staker tabs) ──────────────────
-
-interface HistoryRow {
-  position: Position;
-  oath: Oath;
-}
-
-/**
- * Settled history for a staker side. Columns: settlement date, oath identity +
- * vertical, capital staked, outcome (StatusBadge), and net P&L (payout − stake).
- */
-function StakerHistory({
-  title,
-  rows,
-  side,
-}: {
-  title: string;
-  rows: HistoryRow[];
-  side: "Believer" | "Doubter";
-}) {
-  if (rows.length === 0) return null;
-
-  const cols = "1.1fr 1.6fr 1fr 0.9fr 1fr";
-
-  return (
-    <div
-      style={{
-        background: "var(--white)",
-        border: "1px solid var(--bone-200)",
-        borderRadius: 10,
-        overflow: "hidden",
-      }}
-    >
-      <div
-        className="px-4 py-3"
-        style={{ borderBottom: "1px solid var(--bone-200)" }}
-      >
-        <Eyebrow>{title}</Eyebrow>
-      </div>
-
-      {/* Column header */}
-      <div
-        className="hidden md:grid px-4 py-2.5"
-        style={{
-          gridTemplateColumns: cols,
-          gap: "0.75rem",
-          borderBottom: "1px solid var(--bone-200)",
-        }}
-      >
-        {["Settled", "Oath", "Staked", "Outcome", "Net P&L"].map((c, i) => (
-          <span
-            key={c}
-            className="font-mono"
-            style={{
-              fontSize: "0.6rem",
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              fontWeight: 600,
-              color: "var(--bone-600)",
-              textAlign: i >= 2 ? "right" : "left",
-            }}
-          >
-            {c}
-          </span>
-        ))}
-      </div>
-
-      {/* Rows */}
-      {rows.map(({ position, oath }, i) => {
-        const outcome = outcomeOf(oath);
-        const won = side === "Believer" ? outcome === "Kept" : outcome === "Broken";
-        const payout = position.payout ?? 0;
-        const net = payout - position.stakeAmount;
-        const netColor =
-          net > 0
-            ? "var(--sage-deep)"
-            : net < 0
-              ? "var(--coral-deep)"
-              : "var(--bone-600)";
-        const netLabel = `${net > 0 ? "+" : net < 0 ? "−" : ""}${usdc(Math.abs(net))}`;
-
-        return (
-          <div
-            key={position.positionId}
-            className="grid px-4 py-3 items-center"
-            style={{
-              gridTemplateColumns: cols,
-              gap: "0.75rem",
-              borderBottom:
-                i < rows.length - 1 ? "1px solid var(--bone-200)" : "none",
-            }}
-          >
-            {/* Settled date */}
-            <span
-              className="font-mono"
-              style={{ fontSize: "0.75rem", color: "var(--bone-600)" }}
-            >
-              {settledDate(oath.epochEndMs)}
-            </span>
-
-            {/* Oath identity + vertical */}
-            <Link
-              href={`/oaths/${oath.oathId}`}
-              className="min-w-0"
-              style={{ textDecoration: "none" }}
-            >
-              <div
-                className="font-mono truncate"
-                style={{
-                  fontSize: "0.8rem",
-                  fontWeight: 600,
-                  color: "var(--bone-950)",
-                }}
-              >
-                {oath.promiserAlias ?? oath.oathId}
-              </div>
-              <div
-                className="font-mono"
-                style={{
-                  fontSize: "0.6rem",
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase",
-                  color: "var(--bone-600)",
-                }}
-              >
-                {oath.oathType.replace("Oath", "")} · {oath.oathId}
-              </div>
-            </Link>
-
-            {/* Staked */}
-            <span
-              className="font-mono tabular-nums"
-              style={{
-                fontSize: "0.8rem",
-                color: "var(--bone-800)",
-                textAlign: "right",
-              }}
-            >
-              {usdc(position.stakeAmount)}
-            </span>
-
-            {/* Outcome */}
-            <span className="flex justify-end">
-              <StatusBadge status={outcome} />
-            </span>
-
-            {/* Net P&L */}
-            <span
-              className="font-mono tabular-nums"
-              style={{
-                fontSize: "0.8rem",
-                fontWeight: 600,
-                color: netColor,
-                textAlign: "right",
-              }}
-              title={
-                won
-                  ? `Payout ${usdc(payout)} on ${position.stakeAmount} staked`
-                  : "Stake lost to the winning pool"
-              }
-            >
-              {netLabel}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 // ── Oathkeeper tab ───────────────────────────────────────────────────────────
 
-function OathkeeperTab() {
-  // Oaths this address has bonded against, as operator.
-  const myOaths = OATHS.filter((o) => o.promiser === SELF_ADDRESS);
+function OathkeeperTab({ myOaths }: { myOaths: Oath[] }) {
   const active = myOaths.filter((o) => o.status === "Active");
+
   const standing = myOaths.reduce(
     (acc, o) => {
-      const out = outcomeOf(o);
       if (o.status === "Active") return acc;
-      return out === "Kept"
-        ? { kept: acc.kept + 1, broken: acc.broken }
-        : { kept: acc.kept, broken: acc.broken + 1 };
+      if (o.status === "Kept" || (o.status === "Settled" && !o.breachReason)) {
+        return { kept: acc.kept + 1, broken: acc.broken };
+      }
+      return { kept: acc.kept, broken: acc.broken + 1 };
     },
     { kept: 0, broken: 0 },
   );
@@ -432,45 +166,44 @@ function OathkeeperTab() {
           </div>
         ) : (
           <EmptyState
-            message="You have not bonded an oath as an operator yet. Mint one to put capital behind a service promise and start building Standing."
+            message="You have not minted any oaths yet. Mint one to put capital behind a service promise and start building Standing."
             ctaLabel="Mint an oath"
             ctaHref="/mint"
           />
         )}
       </section>
 
-      {/* Settled history */}
-      <section className="flex flex-col gap-3">
-        <Eyebrow>Settled history</Eyebrow>
-        <EmptyState
-          message="Settled oaths show here once an epoch closes. Bond returned and premium earned on a Kept oath; bond paid to the Client on a Broken one."
-          ctaLabel="Browse the market"
-          ctaHref="/oaths"
-        />
-      </section>
+      {/* All oaths history */}
+      {myOaths.filter((o) => o.status !== "Active").length > 0 && (
+        <section className="flex flex-col gap-3">
+          <Eyebrow>Settled history</Eyebrow>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {myOaths
+              .filter((o) => o.status !== "Active")
+              .map((o) => (
+                <OathCard key={o.oathId} oath={o} />
+              ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
 
 // ── Staker tab (Believer / Doubter — same structure, mirrored economics) ─────
 
-function StakerTab({ side }: { side: "Believer" | "Doubter" }) {
-  const positions = POSITIONS.filter((p) => p.side === side);
+function StakerTab({
+  side,
+  positions,
+  oathMap,
+}: {
+  side: "Believer" | "Doubter";
+  positions: OwnedPosition[];
+  oathMap: Map<string, Oath>;
+}) {
+  const myPositions = positions.filter((p) => p.side === side);
 
-  const active: HistoryRow[] = [];
-  const settled: HistoryRow[] = [];
-  for (const p of positions) {
-    const oath = getOath(p.oathId);
-    if (!oath) continue;
-    (isSettled(p) ? settled : active).push({ position: p, oath });
-  }
-
-  // Aggregates over SETTLED positions only — active stakes aren't scored yet.
-  const totalStaked = settled.reduce((s, r) => s + r.position.stakeAmount, 0);
-  const totalReturned = settled.reduce((s, r) => s + (r.position.payout ?? 0), 0);
-  const netProfit = totalReturned - totalStaked;
-  const wins = settled.filter((r) => (r.position.payout ?? 0) > r.position.stakeAmount).length;
-  const winRate = settled.length > 0 ? Math.round((wins / settled.length) * 100) : 0;
+  const totalStaked = myPositions.reduce((s, p) => s + p.stakeAmount, 0);
 
   const winsOn = side === "Believer" ? "Kept" : "Broken";
   const pool = side === "Believer" ? "Doubter" : "Believer";
@@ -486,123 +219,185 @@ function StakerTab({ side }: { side: "Believer" | "Doubter" }) {
         </span>
       </div>
 
-      {/* Aggregates (settled) — single stat row, vertical dividers */}
+      {/* Aggregate stat row */}
       <section className="flex flex-col gap-3">
-        <Eyebrow>Settled performance</Eyebrow>
+        <Eyebrow>Summary</Eyebrow>
         <div
-          className="grid grid-cols-2 md:grid-cols-4 overflow-hidden"
+          className="flex items-center gap-6 px-4 py-3"
           style={{
             background: "var(--white)",
             border: "1px solid var(--bone-200)",
             borderRadius: 10,
           }}
         >
-          {[
-            {
-              label: "Staked",
-              value: usdc(totalStaked),
-              unit: "USDC",
-              tone: "default" as const,
-            },
-            {
-              label: "Returned",
-              value: usdc(totalReturned),
-              unit: "USDC",
-              tone: (totalReturned > totalStaked ? "win" : "default") as "win" | "default",
-            },
-            {
-              label: "Net P&L",
-              value: `${netProfit >= 0 ? "+" : "−"}${usdc(Math.abs(netProfit))}`,
-              unit: "USDC",
-              tone: (netProfit > 0 ? "win" : netProfit < 0 ? "loss" : "default") as "win" | "loss" | "default",
-            },
-            {
-              label: "Win rate",
-              value: `${winRate}%`,
-              unit: undefined,
-              tone: "default" as const,
-            },
-          ].map((stat, i) => {
-            const color =
-              stat.tone === "win"
-                ? "var(--sage-deep)"
-                : stat.tone === "loss"
-                  ? "var(--coral-deep)"
-                  : "var(--bone-950)";
-            return (
-              <div
-                key={stat.label}
-                className="flex flex-col px-4 py-3"
+          <div>
+            <div
+              className="font-mono"
+              style={{
+                fontSize: "0.6rem",
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                fontWeight: 600,
+                color: "var(--bone-600)",
+                marginBottom: "0.25rem",
+              }}
+            >
+              Positions
+            </div>
+            <div
+              className="font-mono tabular-nums"
+              style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--bone-950)" }}
+            >
+              {myPositions.length}
+            </div>
+          </div>
+          <div
+            aria-hidden="true"
+            style={{ width: 1, height: 32, background: "var(--bone-200)" }}
+          />
+          <div>
+            <div
+              className="font-mono"
+              style={{
+                fontSize: "0.6rem",
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                fontWeight: 600,
+                color: "var(--bone-600)",
+                marginBottom: "0.25rem",
+              }}
+            >
+              Total staked
+            </div>
+            <div
+              className="font-mono tabular-nums"
+              style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--bone-950)" }}
+            >
+              {usdc(totalStaked)}{" "}
+              <span
                 style={{
-                  borderLeft: i > 0 ? "1px solid var(--bone-200)" : "none",
+                  fontSize: "0.65rem",
+                  fontWeight: 500,
+                  color: "var(--bone-600)",
+                  letterSpacing: "0.08em",
                 }}
               >
-                <div
-                  className="font-mono"
-                  style={{
-                    fontSize: "0.6rem",
-                    letterSpacing: "0.12em",
-                    textTransform: "uppercase",
-                    fontWeight: 600,
-                    color: "var(--bone-600)",
-                    marginBottom: "0.375rem",
-                  }}
-                >
-                  {stat.label}
-                </div>
-                <div
-                  className="font-mono tabular-nums"
-                  style={{ fontSize: "1.125rem", fontWeight: 700, color, letterSpacing: "-0.01em" }}
-                >
-                  {stat.value}
-                  {stat.unit && (
-                    <span
-                      style={{
-                        fontSize: "0.65rem",
-                        fontWeight: 500,
-                        color: "var(--bone-600)",
-                        letterSpacing: "0.08em",
-                        marginLeft: 4,
-                      }}
-                    >
-                      {stat.unit}
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+                USDC
+              </span>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Active stakes */}
+      {/* Positions */}
       <section className="flex flex-col gap-3">
-        <Eyebrow>Active stakes</Eyebrow>
-        {active.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {active.map(({ position, oath }) => (
-              <div key={position.positionId} className="flex flex-col gap-2">
-                <OathCard oath={oath} />
+        <Eyebrow>Positions</Eyebrow>
+        {myPositions.length > 0 ? (
+          <div className="flex flex-col gap-3">
+            {myPositions.map((position) => {
+              const oath = oathMap.get(position.oathId);
+              return (
                 <div
-                  className="flex items-center justify-between font-mono px-1"
-                  style={{ fontSize: "0.7rem", color: "var(--bone-600)" }}
+                  key={position.positionId}
+                  style={{
+                    background: "var(--white)",
+                    border: "1px solid var(--bone-200)",
+                    borderRadius: 10,
+                    overflow: "hidden",
+                  }}
                 >
-                  <span>
-                    Your {side.toLowerCase()} stake
-                  </span>
-                  <span
-                    className="tabular-nums"
-                    style={{ color: "var(--bone-950)", fontWeight: 600 }}
+                  {/* Oath identity row */}
+                  <div
+                    className="flex items-center justify-between px-4 py-3"
+                    style={{ borderBottom: "1px solid var(--bone-200)" }}
                   >
-                    {usdc(position.stakeAmount)} USDC
-                  </span>
+                    <div className="flex items-center gap-2 min-w-0">
+                      {oath ? (
+                        <Link
+                          href={`/oaths/${position.oathId}`}
+                          style={{ textDecoration: "none" }}
+                        >
+                          <span
+                            className="font-mono"
+                            style={{
+                              fontSize: "0.85rem",
+                              fontWeight: 600,
+                              color: "var(--bone-950)",
+                            }}
+                          >
+                            {oath.promiserAlias ?? oath.oathId.slice(0, 10) + "..."}
+                          </span>
+                        </Link>
+                      ) : (
+                        <span
+                          className="font-mono truncate"
+                          style={{
+                            fontSize: "0.75rem",
+                            color: "var(--bone-600)",
+                            maxWidth: "20ch",
+                          }}
+                          title={position.oathId}
+                        >
+                          {position.oathId.slice(0, 10)}...
+                        </span>
+                      )}
+                      {oath && <StatusBadge status={oath.status} />}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {position.claimed && (
+                        <span
+                          className="font-mono"
+                          style={{
+                            fontSize: "0.6rem",
+                            letterSpacing: "0.1em",
+                            textTransform: "uppercase",
+                            fontWeight: 600,
+                            color: "var(--sage-deep)",
+                          }}
+                        >
+                          Claimed
+                        </span>
+                      )}
+                      <span
+                        className="font-mono tabular-nums"
+                        style={{
+                          fontSize: "0.85rem",
+                          fontWeight: 600,
+                          color: "var(--bone-950)",
+                        }}
+                      >
+                        {usdc(position.stakeAmount)}{" "}
+                        <span
+                          style={{
+                            fontSize: "0.62rem",
+                            fontWeight: 500,
+                            color: "var(--bone-600)",
+                          }}
+                        >
+                          USDC
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Sentiment bar — only when oath is resolved */}
+                  {oath && (
+                    <div className="px-4 py-3">
+                      <SentimentBar
+                        believerTotal={oath.totalBelieverStakes}
+                        doubterTotal={oath.totalDoubterStakes}
+                        height={5}
+                        showLabels
+                      />
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <EmptyState
-            message={`You have no open ${side.toLowerCase()} positions. Find an oath you want to stake ${
+            message={`You have no ${side.toLowerCase()} positions. Find an oath you want to stake ${
               side === "Believer" ? "for" : "against"
             } in the market.`}
             ctaLabel="Browse oaths"
@@ -610,9 +405,6 @@ function StakerTab({ side }: { side: "Believer" | "Doubter" }) {
           />
         )}
       </section>
-
-      {/* Settled history */}
-      <StakerHistory title="Settled history" rows={settled} side={side} />
     </div>
   );
 }
@@ -626,89 +418,191 @@ const TABS: { key: TabKey; label: string }[] = [
 ];
 
 export default function PortfolioPage() {
-  // Default to Believer: the demo address is a market participant, so its
-  // first populated surface is its staking positions.
-  const [tab, setTab] = useState<TabKey>("believer");
+  const [tab, setTab] = useState<TabKey>("doubter");
+  const account = useCurrentAccount();
+  const client = useSuiClient();
 
-  const clientCount = OATHS.filter((o) => o.client === SELF_ADDRESS).length;
+  const {
+    data,
+    isPending,
+    isError,
+    refetch,
+    isRefetching,
+  } = useQuery({
+    queryKey: ["portfolio", account?.address],
+    queryFn: async () => {
+      const addr = account!.address;
+      const [positions, myOaths, allOaths] = await Promise.all([
+        fetchOwnedPositions(client, addr),
+        fetchOathkeeperOaths(client, addr),
+        fetchAllOaths(client),
+      ]);
+      const oathMap = new Map<string, Oath>(allOaths.map((o) => [o.oathId, o]));
+      return { positions, myOaths, allOaths, oathMap };
+    },
+    enabled: !!account,
+    staleTime: 30_000,
+  });
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-10">
       {/* Header */}
-      <header className="mb-2">
-        <h1
-          className="font-bold"
-          style={{
-            fontSize: "1.75rem",
-            letterSpacing: "-0.02em",
-            color: "var(--bone-950)",
-          }}
-        >
-          Portfolio
-        </h1>
-        <p className="text-sm mt-1" style={{ color: "var(--bone-600)" }}>
-          Your positions across every role you play in the market.
-        </p>
-      </header>
-
-      {/* Client notice — passive role, light line not a tab */}
-      <div
-        className="flex items-center gap-2 mb-6 text-sm"
-        style={{ color: "var(--bone-600)" }}
-      >
-        <RoleBadge role="Client" size="xs" />
-        <span>
-          Oaths where you are the Client:{" "}
-          <span
-            className="font-mono tabular-nums"
-            style={{ color: "var(--bone-950)", fontWeight: 600 }}
-          >
-            {clientCount}
-          </span>
-          {clientCount === 0 && ". No operator has named you as a counterparty."}
-        </span>
-      </div>
-
-      {/* Sub-tabs */}
-      <div
-        className="flex items-center gap-1 mb-8"
-        role="tablist"
-        aria-label="Portfolio role"
-      >
-        {TABS.map((t) => {
-          const selected = tab === t.key;
-          return (
-            <button
-              key={t.key}
-              role="tab"
-              aria-selected={selected}
-              onClick={() => setTab(t.key)}
-              className="font-sans transition-colors"
+      <header className="mb-6">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h1
+              className="font-bold"
               style={{
-                fontSize: "0.85rem",
-                fontWeight: 500,
-                padding: "0.5rem 0.875rem",
-                borderRadius: 8,
-                cursor: "pointer",
-                color: selected ? "var(--bone-950)" : "var(--bone-600)",
-                background: selected ? "var(--white)" : "transparent",
-                border: selected
-                  ? "1px solid var(--bone-200)"
-                  : "1px solid transparent",
+                fontSize: "1.75rem",
+                letterSpacing: "-0.02em",
+                color: "var(--bone-950)",
               }}
             >
-              {t.label}
+              Portfolio
+            </h1>
+            <p className="text-sm mt-1" style={{ color: "var(--bone-600)" }}>
+              Your positions across every role you play in the market.
+            </p>
+          </div>
+          {account && (
+            <button
+              type="button"
+              onClick={() => refetch()}
+              disabled={isPending || isRefetching}
+              className="btn-secondary"
+              style={{
+                fontSize: "0.72rem",
+                padding: "5px 12px",
+                opacity: isPending || isRefetching ? 0.6 : 1,
+                cursor: isPending || isRefetching ? "not-allowed" : "pointer",
+              }}
+            >
+              {isRefetching ? "Refreshing..." : "Refresh"}
             </button>
-          );
-        })}
-      </div>
+          )}
+        </div>
+      </header>
 
-      {/* Panel */}
-      <div role="tabpanel">
-        {tab === "oathkeeper" && <OathkeeperTab />}
-        {tab === "believer" && <StakerTab side="Believer" />}
-        {tab === "doubter" && <StakerTab side="Doubter" />}
-      </div>
+      {/* No wallet connected */}
+      {!account && (
+        <div
+          style={{
+            background: "var(--white)",
+            border: "1px dashed var(--bone-300)",
+            borderRadius: 12,
+            padding: "3rem 2rem",
+            textAlign: "center",
+          }}
+        >
+          <p
+            className="text-sm leading-relaxed mb-6"
+            style={{ color: "var(--bone-600)", maxWidth: "40ch", margin: "0 auto 1.5rem" }}
+          >
+            Connect your wallet to see your positions as Oathkeeper, Believer, or Doubter.
+          </p>
+          <ConnectButton connectText="Connect Wallet" />
+        </div>
+      )}
+
+      {/* Wallet connected — show tabs */}
+      {account && (
+        <>
+          {/* Sub-tabs */}
+          <div
+            className="flex items-center gap-1 mb-8"
+            role="tablist"
+            aria-label="Portfolio role"
+          >
+            {TABS.map((t) => {
+              const selected = tab === t.key;
+              return (
+                <button
+                  key={t.key}
+                  role="tab"
+                  aria-selected={selected}
+                  onClick={() => setTab(t.key)}
+                  className="font-sans transition-colors"
+                  style={{
+                    fontSize: "0.85rem",
+                    fontWeight: 500,
+                    padding: "0.5rem 0.875rem",
+                    borderRadius: 8,
+                    cursor: "pointer",
+                    color: selected ? "var(--bone-950)" : "var(--bone-600)",
+                    background: selected ? "var(--white)" : "transparent",
+                    border: selected
+                      ? "1px solid var(--bone-200)"
+                      : "1px solid transparent",
+                  }}
+                >
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Loading */}
+          {isPending && (
+            <div
+              style={{
+                background: "var(--white)",
+                border: "1px solid var(--bone-200)",
+                borderRadius: 10,
+                padding: "2rem",
+              }}
+            >
+              <p
+                className="font-mono text-sm"
+                style={{ color: "var(--bone-600)" }}
+              >
+                Loading positions from chain...
+              </p>
+            </div>
+          )}
+
+          {/* Error */}
+          {isError && (
+            <div
+              style={{
+                background: "var(--white)",
+                border: "1px solid var(--coral-deep)",
+                borderRadius: 10,
+                padding: "1.5rem",
+              }}
+            >
+              <p
+                className="font-mono text-sm"
+                style={{ color: "var(--coral-deep)" }}
+              >
+                Failed to load positions. Check your connection and try refreshing.
+              </p>
+            </div>
+          )}
+
+          {/* Panel */}
+          {data && !isPending && (
+            <div role="tabpanel">
+              {tab === "oathkeeper" && (
+                <OathkeeperTab myOaths={data.myOaths} />
+              )}
+              {tab === "believer" && (
+                <StakerTab
+                  side="Believer"
+                  positions={data.positions}
+                  oathMap={data.oathMap}
+                />
+              )}
+              {tab === "doubter" && (
+                <StakerTab
+                  side="Doubter"
+                  positions={data.positions}
+                  oathMap={data.oathMap}
+                />
+              )}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

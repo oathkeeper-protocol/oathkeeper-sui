@@ -1,0 +1,189 @@
+/**
+ * Live on-chain reads for the connected wallet + the marketplace.
+ *
+ * Maps Move objects/events to the same Oath view-model shape as lib/mock.ts, so the
+ * screens render real testnet state. Used client-side via dapp-kit's useSuiClient inside
+ * @tanstack/react-query, so actions (mint/stake) reflect after a refetch.
+ *
+ * The on-chain Oath content shape (verified): Balance fields render as value strings;
+ * dims/scope are nested `.fields`; oath_type is `{ variant }`; assets are byte arrays.
+ */
+import type { SuiJsonRpcClient } from "@mysten/sui/jsonRpc";
+/** Alias so call sites that pass useSuiClient() return type work without cast. */
+type SuiClient = SuiJsonRpcClient;
+import type { Oath, OathStatus, BreachReason, OathTypeVariant } from "./mock";
+import { CHAIN, USDC_TYPE, explorerObject } from "./chain-config";
+
+const STATUS: OathStatus[] = ["Active", "Kept", "Broken", "Settled"];
+const BREACH: BreachReason[] = ["Drawdown", "MinTrades", "MinPnl", "MinVolume"];
+
+const ascii = (a: number[]) => new TextDecoder().decode(Uint8Array.from(a));
+const alias = (addr: string) => "OP-" + addr.slice(2, 6).toUpperCase();
+
+function prose(dims: Oath["dims"], assets: string[]): string {
+  const dd = (dims.maxDrawdownBps / 100).toFixed(0);
+  const parts = [`Holds drawdown at or under ${dd}%`, `at least ${dims.minTrades} trades`];
+  if (dims.minPnlBps > 0) parts.push(`at least ${(dims.minPnlBps / 100).toFixed(0)}% net PnL`);
+  return `${parts.join(", ")} on ${assets.join("/")} this epoch.`;
+}
+
+/** Map a getObject(showContent) result to the Oath view-model. Returns null if not an Oath. */
+export function mapOath(content: unknown): Oath | null {
+  const c = content as { dataType?: string; type?: string; fields?: Record<string, unknown> };
+  if (!c || c.dataType !== "moveObject" || !String(c.type).includes("::oath::Oath<")) return null;
+  const f = c.fields as Record<string, any>;
+  const assets = (f.scope.fields.allowed_assets as number[][]).map(ascii);
+  const dims = {
+    maxDrawdownBps: Number(f.dims.fields.max_drawdown_bps),
+    minTrades: Number(f.dims.fields.min_trades),
+    minPnlBps: Number(f.dims.fields.min_pnl_bps),
+    minVolumeUsdc: Number(f.dims.fields.min_volume_usdc),
+  };
+  const oathId = f.id.id as string;
+  return {
+    oathId,
+    promiser: f.promiser,
+    promiserAlias: alias(f.promiser),
+    client: f.client,
+    oathType: f.oath_type.variant as OathTypeVariant,
+    bondAmount: Number(f.bond),
+    clientClaim: Number(f.client_claim),
+    clientClaimText: prose(dims, assets),
+    dims,
+    totalBelieverStakes: Number(f.total_believer_stakes ?? f.believer_pool),
+    totalDoubterStakes: Number(f.total_doubter_stakes ?? f.doubter_pool),
+    currentEquity: Number(f.current_equity_usdc),
+    startingEquity: Number(f.starting_equity_usdc),
+    tradeCount: Number(f.trade_count),
+    cumulativeVolume: Number(f.cumulative_volume_usdc),
+    epochEndMs: Number(f.epoch_end_ms),
+    status: STATUS[Number(f.status)] ?? "Active",
+    breachReason: f.breach_reason == null ? undefined : BREACH[Number(f.breach_reason)],
+    standing: { kept: 0, broken: 0 },
+    assets,
+    attestations: [],
+    onchain: true,
+    explorerUrl: explorerObject(oathId),
+  };
+}
+
+async function getMinted(client: SuiClient): Promise<{ oathId: string; promiser: string; ts: number }[]> {
+  const out: { oathId: string; promiser: string; ts: number }[] = [];
+  let cursor: { txDigest: string; eventSeq: string } | null = null;
+  for (;;) {
+    const page = await client.queryEvents({
+      query: { MoveEventType: `${CHAIN.packageId}::oath::OathMinted` },
+      cursor: cursor ?? undefined, limit: 50, order: "ascending",
+    });
+    for (const e of page.data) {
+      const j = e.parsedJson as { oath_id: string; promiser: string };
+      out.push({ oathId: j.oath_id, promiser: j.promiser, ts: Number(e.timestampMs ?? 0) });
+    }
+    if (!page.hasNextPage || !page.nextCursor) break;
+    cursor = page.nextCursor;
+  }
+  return out;
+}
+
+async function readOaths(client: SuiClient, ids: string[]): Promise<Oath[]> {
+  const oaths: Oath[] = [];
+  for (let i = 0; i < ids.length; i += 50) {
+    const objs = await client.multiGetObjects({ ids: ids.slice(i, i + 50), options: { showContent: true, showType: true } });
+    for (const o of objs) {
+      const m = mapOath((o.data as { content?: unknown })?.content);
+      if (m) oaths.push(m);
+    }
+  }
+  return oaths;
+}
+
+/** All oaths in the deployment, newest epoch-end first. */
+export async function fetchAllOaths(client: SuiClient): Promise<Oath[]> {
+  const minted = await getMinted(client);
+  const oaths = await readOaths(client, minted.map((m) => m.oathId));
+  return oaths.sort((a, b) => b.epochEndMs - a.epochEndMs);
+}
+
+/** One oath, live. */
+export async function fetchOath(client: SuiClient, oathId: string): Promise<Oath | null> {
+  const r = await client.getObject({ id: oathId, options: { showContent: true, showType: true } });
+  return mapOath((r.data as { content?: unknown })?.content);
+}
+
+/** Oaths the wallet created (Oathkeeper role). */
+export async function fetchOathkeeperOaths(client: SuiClient, owner: string): Promise<Oath[]> {
+  const minted = await getMinted(client);
+  const mine = minted.filter((m) => m.promiser === owner).map((m) => m.oathId);
+  return readOaths(client, mine);
+}
+
+export interface OwnedPosition {
+  positionId: string;
+  side: "Believer" | "Doubter";
+  oathId: string;
+  stakeAmount: number;
+  claimed: boolean;
+}
+
+/** Believer + Doubter position objects the wallet owns. */
+export async function fetchOwnedPositions(client: SuiClient, owner: string): Promise<OwnedPosition[]> {
+  const types: Array<["Believer" | "Doubter", string]> = [
+    ["Believer", `${CHAIN.packageId}::believer::BelieverPosition<${USDC_TYPE}>`],
+    ["Doubter", `${CHAIN.packageId}::doubter::DoubterPosition<${USDC_TYPE}>`],
+  ];
+  const out: OwnedPosition[] = [];
+  for (const [side, structType] of types) {
+    let cursor: string | null = null;
+    for (;;) {
+      const page = await client.getOwnedObjects({
+        owner, filter: { StructType: structType },
+        options: { showContent: true }, cursor: cursor ?? undefined, limit: 50,
+      });
+      for (const o of page.data) {
+        const f = (o.data as { content?: { fields?: Record<string, any> } })?.content?.fields;
+        if (!f) continue;
+        out.push({
+          positionId: f.id.id, side, oathId: f.oath_id,
+          stakeAmount: Number(f.stake_amount), claimed: Boolean(f.claimed),
+        });
+      }
+      if (!page.hasNextPage || !page.nextCursor) break;
+      cursor = page.nextCursor;
+    }
+  }
+  return out;
+}
+
+/** Cumulative believer/doubter pool series for an oath, from stake events (Polymarket-style). */
+export interface SentimentPoint { ts: number; believer: number; doubter: number }
+
+export async function fetchSentimentSeries(client: SuiClient, oathId: string): Promise<SentimentPoint[]> {
+  const events: { ts: number; side: "b" | "d"; amount: number }[] = [];
+  for (const [mod, evt, side] of [
+    ["believer", "BelieverStaked", "b"],
+    ["doubter", "DoubterStaked", "d"],
+  ] as const) {
+    let cursor: { txDigest: string; eventSeq: string } | null = null;
+    for (;;) {
+      const page = await client.queryEvents({
+        query: { MoveEventType: `${CHAIN.packageId}::${mod}::${evt}` },
+        cursor: cursor ?? undefined, limit: 50, order: "ascending",
+      });
+      for (const e of page.data) {
+        const j = e.parsedJson as { oath_id: string; stake_amount: string };
+        if (j.oath_id !== oathId) continue;
+        events.push({ ts: Number(e.timestampMs ?? 0), side, amount: Number(j.stake_amount) });
+      }
+      if (!page.hasNextPage || !page.nextCursor) break;
+      cursor = page.nextCursor;
+    }
+  }
+  events.sort((a, b) => a.ts - b.ts);
+  let believer = 0, doubter = 0;
+  const series: SentimentPoint[] = [];
+  for (const e of events) {
+    if (e.side === "b") believer += e.amount; else doubter += e.amount;
+    series.push({ ts: e.ts, believer, doubter });
+  }
+  return series;
+}

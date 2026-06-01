@@ -16,6 +16,7 @@ import StakePanel from "@/components/StakePanel";
 import SettlePreview from "@/components/SettlePreview";
 
 import DetailActionBar from "./DetailActionBar";
+import LiveSentiment from "./LiveSentiment";
 
 /**
  * Oath detail — /oaths/[oathId]
@@ -234,6 +235,9 @@ export default async function OathDetailPage({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* LEFT — the commitment */}
         <div className="lg:col-span-7 flex flex-col gap-5">
+          {/* Live sentiment chart — only for on-chain oaths */}
+          {oath.onchain && <LiveSentiment oathId={oath.oathId} />}
+
           {/* Sealed oath text */}
           <section
             style={{
