@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useCurrentAccount, useSignAndExecuteTransaction, useSuiClient } from "@mysten/dapp-kit";
+import { useQueryClient } from "@tanstack/react-query";
 import { previewStake } from "@/lib/economics";
 import { usdc, bpsToPct } from "@/lib/format";
 import { SPLIT } from "@/lib/mock";
@@ -39,6 +40,7 @@ export default function StakePanel({
 }) {
   const account = useCurrentAccount();
   const client = useSuiClient();
+  const queryClient = useQueryClient();
   const { mutate: signAndExecute, isPending: stakePending } = useSignAndExecuteTransaction();
 
   const [side, setSide] = useState<"Believer" | "Doubter">("Believer");
@@ -72,6 +74,11 @@ export default function StakePanel({
           await client.waitForTransaction({ digest });
           setStakeDigest(digest);
           onStake?.(side, amount);
+          if (oathId) {
+            queryClient.invalidateQueries({ queryKey: ["oath", oathId] });
+            queryClient.invalidateQueries({ queryKey: ["sentimentSeries", oathId] });
+            queryClient.invalidateQueries({ queryKey: ["oaths"] });
+          }
         },
         onError: (err) => {
           const msg = err instanceof Error ? err.message : String(err);

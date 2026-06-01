@@ -40,6 +40,7 @@ const VERTICALS: {
 const ALL_ASSETS = ["BTC-PERP", "ETH-PERP", "SOL-PERP", "SUI-PERP", "APT-PERP"];
 
 const EPOCHS = [
+  { label: "2min (demo)", ms: 120_000 },
   { label: "24h", ms: 86_400_000 },
   { label: "3d", ms: 259_200_000 },
   { label: "7d", ms: 604_800_000 },

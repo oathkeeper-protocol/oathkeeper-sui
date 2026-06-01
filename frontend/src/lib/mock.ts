@@ -387,26 +387,6 @@ export const OATHS: Oath[] = SNAPSHOT_OATHS.length > 0 ? SNAPSHOT_OATHS : MOCK_O
 /** True when the marketplace is showing live on-chain data. */
 export const IS_LIVE: boolean = SNAPSHOT_OATHS.length > 0;
 
-// ─── Portfolio positions (a connected user's open + settled stakes) ──────────
-
-export const POSITIONS: Position[] = [
-  // Open Believer position on the on-pace Apollo oath (#0481)
-  { positionId: "0xp01", oathId: "0x0481", side: "Believer", stakeAmount: 200 },
-  // Open Doubter position on the floor-pressing Meridian oath (#0479)
-  { positionId: "0xp02", oathId: "0x0479", side: "Doubter", stakeAmount: 350 },
-  // Settled win: Doubter on the Broken Cinder oath (#0461).
-  // payout = 150 + (150/2600)*0.70*1800 (believer pool is the loser pool).
-  { positionId: "0xp03", oathId: "0x0461", side: "Doubter", stakeAmount: 150, payout: 222.69 },
-  // Settled win: Believer on the Kept Vermilion oath (#045a)
-  { positionId: "0xp04", oathId: "0x045a", side: "Believer", stakeAmount: 400, payout: 522.5 },
-  // Settled loss: Believer on the Broken Behavior oath (#0431)
-  { positionId: "0xp05", oathId: "0x0431", side: "Believer", stakeAmount: 100, payout: 0 },
-];
-
-/** The address treated as "you" in the portfolio mock. */
-export const SELF_ADDRESS =
-  "0xae11b0cc5e9f3d72a14c8d6b4a2f9e7c5d3b1a0f8e6c4d2b9a7f5e3c1d0b8a6f";
-
 /** Look up an oath by id. */
 export function getOath(oathId: string): Oath | undefined {
   return OATHS.find((o) => o.oathId === oathId);
