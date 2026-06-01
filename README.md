@@ -109,6 +109,37 @@ Both verified live on Sui testnet (see "What is shipped" below).
 
 ---
 
+## Verifiability: how an SLA outcome is proven (and the honest boundary)
+
+Settlement is trustless **math**: the contract reads the dimensions and moves funds with no
+arbitrator. But `record_trade` is gated to the bound exec wallet and accepts the operator's
+**self-reported** equity/volume/fill numbers — so on its own, the contract proves the rules
+were applied, while *trusting the inputs*. Closing that gap is the job of the reconciler.
+
+**The reconciler** (`agent/src/recon`, `pnpm reconcile <oathId>`) is an open-source,
+**deterministic** verifier. It re-derives the truth from the venue's own fill record and
+diffs it against the operator's on-chain attestations. Because it is pure (no I/O in the
+core), anyone can re-run it and get the identical verdict — a fabricated or altered fill is
+a **proof**, not an opinion. On a substantiated finding it files `dispute_attestation`,
+which records a durable, monotonic dispute on the Oath (`disputed` + `dispute_count`).
+
+The discriminator is **where the ground truth lives**:
+
+| Venue | Resolution | Trust root |
+|-------|-----------|-----------|
+| **DeepBook** (on Sui) | Reconcile attestations against on-chain fills — **the chain is the oracle** | none (on-chain) |
+| **Hyperliquid** (another chain) | HL API / Nautilus / zkTLS attestation | roadmap |
+| **Uptime / Behavior** (off-chain) | Bonded prober / judge, or recursive Oathkeeper bonding | roadmap |
+
+So Oathkeeper needs **no external oracle** for its headline vertical: trading-on-DeepBook
+resolves by direct on-chain reconciliation. What's shipped today is trustless **detection**
+(deterministic, reproducible) + a durable on-chain dispute record. **Auto-slashing** a bond
+on a proven dispute is the bonded-optimistic challenge-window layer — roadmap, stated plainly
+so the demo never overclaims. Run `pnpm recon:demo` to watch the reconciler catch a
+fabricated fill with one command.
+
+---
+
 ## OathType enum
 
 The Oath struct carries an `OathType` field. Three variants are mintable; two are roadmap signals:
@@ -143,7 +174,9 @@ The contract accepts `UptimeOath` and `BehaviorOath` at mint but has no attestat
 | Layer | Status | Notes |
 |-------|--------|-------|
 | Move contracts | Shipped | 7 protocol modules + 1 mock USDC module; zero `abort 0` bodies |
-| Move tests | **46 passing, 0 failing** | Includes numerical conservation checks for both Kept and Broken outcomes |
+| Move tests | **53 passing, 0 failing** | Conservation checks for both Kept and Broken outcomes; dispute-record tests |
+| Reconciliation verifier | Shipped | `agent/src/recon` — pure deterministic core (8 vitest cases), venue adapters (DeepBook live / fixture / unverifiable), `pnpm reconcile` CLI + `pnpm recon:demo` |
+| On-chain dispute record | Shipped (contract) | `dispute_attestation` records durable `disputed` + `dispute_count`; reconciler files them. *(Live on testnet pending a redeploy — see roadmap.)* |
 | ed25519 signature verification | Shipped (Day 6) | `sui::ed25519` + `blake2b256(0x00 || pk)` address derivation; proven with offline vector in `ed25519_real_signature_verifies` test |
 | ecdsa_k1 / Hyperliquid signatures | Pass-through (Day 16) | Documented gate; real `secp256k1_ecrecover` + EIP-191 + pubkey decompress lands Day 16 |
 | Testnet deploy | Shipped | Package `0xae9da7ca311e9388995875ee5e557b270e2fae4d6f993555daa67042575598f9` |
@@ -165,7 +198,9 @@ The contract accepts `UptimeOath` and `BehaviorOath` at mint but has no attestat
 - **DeepBook order execution** -- agent runner placing real testnet orders is Week 3 work
 - **ecdsa_k1 real verify** -- Hyperliquid venue binding uses pass-through today; real `secp256k1_ecrecover` lands Day 16
 - **On-chain Standing module** -- standing is computed from events; a queryable on-chain object is v2
-- **Dispute resolution** -- `dispute_attestation` emits an event; full slashing logic is Week 3
+- **Dispute auto-slashing** -- the reconciler (shipped) detects fabrications deterministically and `dispute_attestation` records them durably on-chain; turning a proven dispute into automatic bond slashing (bonded-optimistic challenge window) is the next layer
+- **Hardened-contract redeploy** -- the dispute-record contract is committed + 53 tests green; the live testnet package still runs the prior build until `bash scripts/redeploy.sh` is run (needs `agent/.env` deployer key + gas)
+- **DeepBook fill-level reconciliation** -- the live DeepBook venue source is digest-existence today; parsing fill events for asset/notional cross-check is the next refinement
 - **UptimeOath attestation adapter** -- enum variant mintable, no prober or adapter
 - **BehaviorOath attestation adapter** -- enum variant mintable, no judge or adapter
 - **Vault yield** -- idle capital does not route to money markets in v1; all yield fields are mocked / omitted
@@ -233,12 +268,15 @@ oathkeeper-sui/
 |   |   +-- signature.move        # ed25519 (real) + ecdsa_k1 (pass-through)
 |   |   +-- usdc.move             # mock USDC with permissionless faucet
 |   +-- tests/
-|       +-- v2_tests.move         # 46 tests (conservation, staking, settlement, breach, pro-rata)
+|       +-- v2_tests.move         # conservation, staking, settlement, breach, pro-rata
+|       +-- attestation_tests.move # dispute-record tests   (53 Move tests total)
 +-- docs/
 |   +-- ARCHITECTURE.md           # Module design, state machine, integration plans
 |   +-- V2-DESIGN.md              # Authoritative v2 economics spec
 |   +-- SPRINT-PLAN.md            # 32-day build sprint
-+-- agent/                        # TypeScript runtime (smoke, seed, snapshot, e2e, indexer)
++-- agent/                        # TypeScript runtime
+|   +-- src/recon/                # deterministic reconciliation verifier (pnpm reconcile / recon:demo)
+|   +-- src/{seed,snapshot,e2e,smoke}.ts, src/indexer/  # ops + event poller
 +-- frontend/                     # Next.js 16 market UI (live against testnet)
 +-- scripts/                      # Deploy + ops helpers
 +-- CLAUDE.md                     # Operating context for code sessions

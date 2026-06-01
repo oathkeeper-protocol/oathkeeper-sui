@@ -69,6 +69,17 @@ This is the technical centerpiece of the mint flow.
 
 ---
 
+## Shot 5b (30s) -- "But how do you know they didn't lie?" -- the reconciler
+
+This is the answer to the sharpest judge question, and it's a real terminal moment.
+
+- Voiceover: "record_trade is self-reported. So we don't trust it -- we verify it. Anyone runs the open-source reconciler."
+- Run `pnpm recon:demo` (or `pnpm reconcile <oathId>`) in a terminal on screen. It deterministically catches a fill the operator attested that never happened on the venue, and prints `VERDICT: DISCREPANCIES`.
+- Voiceover: "Deterministic. Reproducible. For DeepBook the fills are on-chain -- the chain is the oracle, no external oracle needed. A fabrication is provable by anyone, who files dispute_attestation on-chain. Auto-slashing on a proven dispute is the next layer; detection is trustless today."
+- Show the Verification panel on the oath detail page (reconcile command + dispute state).
+
+---
+
 ## Shot 6 (50s) -- settle_epoch: sum-zero distribution on Explorer (the centerpiece)
 
 This is the payoff moment. Use a 2-minute demo-epoch oath that has already run to completion (or run one live if timing allows).

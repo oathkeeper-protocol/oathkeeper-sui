@@ -1,6 +1,34 @@
 # Architecture
 
-> **v2 economics.** This document reflects the shipped v2 5-role model (Oathkeeper / Client / Believer / Doubter / Platform) with 10/20/70 settlement. There is no LP pool. See `docs/V2-DESIGN.md` for the full economic spec and `contracts/sources/*.move` for the authoritative contract surface (46 tests).
+> **v2 economics.** This document reflects the shipped v2 5-role model (Oathkeeper / Client / Believer / Doubter / Platform) with 10/20/70 settlement. There is no LP pool. See `docs/V2-DESIGN.md` for the full economic spec and `contracts/sources/*.move` for the authoritative contract surface (53 tests).
+
+---
+
+## Verifiability & reconciliation (the attestation trust model)
+
+Settlement is trustless math, but `record_trade` accepts the bound exec wallet's
+**self-reported** numbers — the contract proves the rules, not the inputs. The resolution
+model, by where the ground truth lives:
+
+- **Tier 0 — on-chain native (no oracle).** DeepBook fills live on Sui, so settlement/
+  reconciliation read the truth directly. *The chain is the oracle.* This is the headline
+  trading vertical's resolution and is strictly better than any prediction-market oracle.
+- **Tier 1 — optimistic recompute (on-chain inputs, heavy to recompute in Move).** Anyone
+  recomputes the dimensions off-chain from public on-chain data; a challenge window finalizes
+  it. Deterministic recomputation + the operator's existing bond = no external oracle, no
+  governance token. *This is the realistic v1 form for DeepBook PnL/drawdown* (computing fill
+  history inside a Move `settle` call is impractical).
+- **Tier 2 — bonded attestation (genuinely off-chain facts: uptime, behavior, Hyperliquid).**
+  m-of-n signers, and/or the attestor is itself an Oathkeeper (recursive bonding). Nautilus
+  (TEE) or zkTLS verified on Sui are the Sui-native options. Roadmap.
+
+**The reconciler** (`agent/src/recon`) is the shipped piece of this: an open-source,
+deterministic verifier (`reconcile()` is pure — same inputs, same verdict, run by anyone). It
+diffs on-chain attestations against the venue's own fill record and, on a substantiated
+finding, files `dispute_attestation`. That records a durable, monotonic dispute on the Oath
+(`disputed` + `dispute_count`). **Shipped = trustless detection + durable dispute record.
+Roadmap = auto-slashing** via the Tier-1 challenge window. Stated honestly so the pitch never
+claims inputs are verifiable today when only detection is.
 
 ---
 
