@@ -146,9 +146,9 @@ The contract accepts `UptimeOath` and `BehaviorOath` at mint but has no attestat
 | Move tests | **46 passing, 0 failing** | Includes numerical conservation checks for both Kept and Broken outcomes |
 | ed25519 signature verification | Shipped (Day 6) | `sui::ed25519` + `blake2b256(0x00 || pk)` address derivation; proven with offline vector in `ed25519_real_signature_verifies` test |
 | ecdsa_k1 / Hyperliquid signatures | Pass-through (Day 16) | Documented gate; real `secp256k1_ecrecover` + EIP-191 + pubkey decompress lands Day 16 |
-| Testnet deploy | Shipped | Package `0xa4c2f835f0abf70cf6ba095d7244a1ca8c8a1df7189b6a692517e32727ee267d` |
-| Registry | Shipped | `0xa54b3b038d77ebb0228f90e7661ced9a25e65c8fc18d730315e32c1f8ce1f2f9` |
-| Mock USDC (permissionless faucet) | Shipped | TreasuryCap `0xb9c24ef76fd4ec9b571f6c67e8bed2e65c01a59609ca424b88f23ca1802ae43c` |
+| Testnet deploy | Shipped | Package `0xae9da7ca311e9388995875ee5e557b270e2fae4d6f993555daa67042575598f9` |
+| Registry | Shipped | `0x670b6d6e19fddcf7cf2d0877b8efb7b082be4a6a6c0f1cc3876a7ab238cd8838` |
+| Mock USDC (permissionless faucet) | Shipped | TreasuryCap `0x44c876716bfc74fc1d8be5b15731c4c78f099fc2efd77fba77428c94c1b8aae5` |
 | E2E -- Kept (live testnet) | Verified | Believer +1050, doubter -1500, platform +150, oathkeeper +300, client 0; sum = 0 |
 | E2E -- Broken (live testnet) | Verified | Client +5400, platform +5200, doubter +1400, believer -2000, oathkeeper -10000; sum = 0 |
 | TypeScript agent workspace | Shipped | `@mysten/sui 2.17`; smoke, seed, snapshot, e2e scripts; event-poller indexer |

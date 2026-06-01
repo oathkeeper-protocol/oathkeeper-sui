@@ -1,7 +1,7 @@
 # Demo Script -- Oathkeeper-Sui
 
 > 5 minutes max, 7 shots, judge-optimized.
-> App is live on Sui testnet. Package: 0xa4c2f835f0abf70cf6ba095d7244a1ca8c8a1df7189b6a692517e32727ee267d
+> App is live on Sui testnet. Package: 0xae9da7ca311e9388995875ee5e557b270e2fae4d6f993555daa67042575598f9
 > Lead with the user and the pain. Architecture goes last.
 
 ## Opening line (memorize)
@@ -106,7 +106,7 @@ Do not show staged footage for unshipped features. This shot is a slide, not a l
 **Close (20s):**
 
 - Return to the Browse page with real oaths on testnet.
-- Voiceover: "Oathkeeper. Programmable conditional settlement for any bonded commitment. Trading is what we shipped end-to-end. Uptime and Behavior are next. Live on Sui testnet. Package 0xa4c2f835...ee267d."
+- Voiceover: "Oathkeeper. Programmable conditional settlement for any bonded commitment. Trading is what we shipped end-to-end. Uptime and Behavior are next. Live on Sui testnet. Package 0xae9da7ca311e9388995875ee5e557b270e2fae4d6f993555daa67042575598f9...ee267d."
 - Close on: domain, testnet explorer link, GitHub.
 
 ---

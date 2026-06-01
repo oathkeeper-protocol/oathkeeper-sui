@@ -291,9 +291,9 @@ All four must hold for the oath to be Kept. Breach on any one dimension flips th
 
 | Object | ID |
 |--------|----|
-| Package | `0xa4c2f835f0abf70cf6ba095d7244a1ca8c8a1df7189b6a692517e32727ee267d` |
-| Registry | `0xa54b3b038d77ebb0228f90e7661ced9a25e65c8fc18d730315e32c1f8ce1f2f9` |
-| Mock USDC TreasuryCap | `0xb9c24ef76fd4ec9b571f6c67e8bed2e65c01a59609ca424b88f23ca1802ae43c` |
+| Package | `0xae9da7ca311e9388995875ee5e557b270e2fae4d6f993555daa67042575598f9` |
+| Registry | `0x670b6d6e19fddcf7cf2d0877b8efb7b082be4a6a6c0f1cc3876a7ab238cd8838` |
+| Mock USDC TreasuryCap | `0x44c876716bfc74fc1d8be5b15731c4c78f099fc2efd77fba77428c94c1b8aae5` |
 
 E2E conservation verified live for both outcomes (SCENARIO=kept and SCENARIO=broken in `agent/src/e2e.ts`):
 
