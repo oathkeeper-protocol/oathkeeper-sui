@@ -1,99 +1,133 @@
-# Demo Script — Oathkeeper-Sui
+# Demo Script -- Oathkeeper-Sui
 
-> ≤5 minutes, 7 shots, judge-optimized. Lead with the user and the pain. Architecture goes last.
+> 5 minutes max, 7 shots, judge-optimized.
+> App is live on Sui testnet. Package: 0xa4c2f835f0abf70cf6ba095d7244a1ca8c8a1df7189b6a692517e32727ee267d
+> Lead with the user and the pain. Architecture goes last.
 
 ## Opening line (memorize)
 
-> *"You want exposure to an anon AI trader's edge — but they won't show you their strategy, and you can't tell a rug from real edge. Oathkeeper resolves both halves."*
+> "You want exposure to an anon AI trader's edge -- but they won't show you their strategy, and you can't tell a rug from real alpha. Their client has no on-chain recourse if the strategy blows up. Oathkeeper resolves both halves."
 
-## Shot 1 (25s) — The dilemma
+---
 
-Pain frame, no contracts, no jargon.
+## Shot 1 (25s) -- The dilemma
 
-- Twitter screenshot of an anon trader with track record claims
-- Voiceover: every AI trader sits on a horn: **reveal strategy → alpha decays**, or **hide strategy → can't tell rug from edge**
-- Oathkeeper: a market for verifiable performance *without* revealed alpha
+Pain frame. No contracts. No jargon.
 
-## Shot 2 (25s) — Three roles
+- Twitter screenshot of an anon trader with track-record claims
+- Voiceover: every AI trader sits on a horn. Reveal strategy and alpha decays. Hide strategy and you cannot tell a rug from real edge. Client has no on-chain recourse if the trader blows up.
+- Oathkeeper: a programmable conditional-settlement layer. Capital that moves automatically when an on-chain condition is verified. Zero arbitration.
 
-Mechanism in 25 seconds.
+---
 
-- **Oathkeeper** writes a bonded oath (free text, multi-dim: drawdown ≤20%, ≥10 trades, ≥5% PnL). Bonds USDC.
-- **Doubter** browses oaths, stakes against ones they think will break.
-- **LP** underwrites pool float, earns from total wager volume.
-- On kept oath: stake splits 60/40 Oathkeeper/LP. **The Oathkeeper earns from skeptics being wrong.**
-- On broken oath: bond pays Doubters, residual sweeps to LPs. Oathkeeper gets zero.
+## Shot 2 (25s) -- Five roles and the 10/20/70 split
 
-## Shot 3 (35s) — Live demo: mint an Oath
+Mechanism in 25 seconds. Do not rush; this is the one thing judges need to internalize before the live demo matters.
 
-- Open `/oaths/new`, write the oath text, set the 4 dimensions, click Mint
-- Watch the encrypted oath upload to Walrus, see the merkle root commit on Sui Explorer
-- Watch the exec wallet signature bind on-chain
-- "Three primitives, one form: Walrus, Seal, Sui."
+- **Oathkeeper** posts a USDC bond + multi-dim oath (drawdown, trades, PnL, volume). Bonds 10,000 USDC.
+- **Client** registers a claim against the bond. Pays nothing. Gets automatic on-chain recourse on breach.
+- **Believer** stakes FOR the Oathkeeper. Earns 70% of Doubter pool if Kept.
+- **Doubter** stakes AGAINST. Earns 70% of Believer pool if Broken.
+- **Platform** takes 10% of loser stakes on every settled oath. Explicit, disclosed, zero-knowledge-free.
 
-## Shot 4 (35s) — Doubter stakes
+Settlement split graphic: 10% Platform / 20% secondary / 70% winners. Two outcomes:
 
-- Switch wallet. Open the freshly-minted oath.
-- See the bond, the 4-dimension promise, the Oathkeeper's Standing track record.
-- Stake 6.25 USDC against a 50 USDC claim (12.5% premium).
-- Notice: contract reverts if `Σ open claims > bond` — invariant visible to the user.
+- Kept: secondary = Oathkeeper, losers = Doubters. Testnet result: oathkeeper +300, believer +1050, doubter -1500, platform +150, client 0. Net = 0.
+- Broken: bond claim goes to Client + residual to Platform, secondary = Client, losers = Believers. Testnet result: client +5400, platform +5200, doubter +1400, believer -2000, oathkeeper -10000. Net = 0.
 
-## Shot 5 (50s) — Live fills + breach
+"Conservation proven on-chain. Total in equals total out, both outcomes, no ifs."
 
-- Agent runs the strategy, places real DeepBook orders.
-- Equity curve updates in real time. Each tick has a clickable DeepBook tx hash.
-- (Pre-scripted) trader busts through drawdown ceiling on a single bad fill.
-- `mark_breach()` button lights up. Anyone (Doubter, LP, passerby) can click it.
+---
+
+## Shot 3 (35s) -- Live mint: one PTB, one atomic bind
+
+This is the technical centerpiece of the mint flow.
+
+- Open the mint form (`/oaths/new`). Write the oath text, set the four dimensions, set epoch to the 2-minute demo preset.
+- Click Mint. Show the single transaction on Sui Explorer.
+- Highlight what the PTB contains: `new_dimensions` + `new_scope` + `start_epoch` (returns a zero-ability `ScopeReservation` hot potato) + `bind_exec_wallet`. All four in one transaction. The hot potato forces completion -- if `bind_exec_wallet` is absent, the PTB fails at the type-system level.
+- Voiceover: "The exec wallet is now bound on-chain. No separate setup tx. No lock-then-fail window. One PTB, one signature, done."
+
+---
+
+## Shot 4 (35s) -- Faucet, then Believer and Doubter stake + sentiment chart
+
+- Switch to a funded wallet (use the permissionless USDC faucet: one click, testnet USDC arrives in seconds -- show this).
+- Open the live oath from the Browse page.
+- One wallet stakes FOR (Believer). One stakes AGAINST (Doubter).
+- Show the Polymarket-style sentiment chart updating in real time: Believer share of the pool shifts as each stake lands.
+- Voiceover: "Anyone can stake. No whitelist. The chart is live market sentiment on this operator's reliability."
+
+---
+
+## Shot 5 (40s) -- record_trade by the bound exec wallet + live gauges
+
+- The exec wallet (the bound address from Shot 3) calls `record_trade` on the live oath.
+- Each attestation is an on-chain object. Show one on Sui Explorer: timestamp, trade details, caller = bound exec address.
+- The UI equity curve and trade-count gauge update from live chain events.
+- Voiceover: "Only the bound exec wallet can call record_trade. The signature check is enforced in Move -- not a UI guard, not an API key."
+
+---
+
+## Shot 6 (50s) -- settle_epoch: sum-zero distribution on Explorer (the centerpiece)
+
+This is the payoff moment. Use a 2-minute demo-epoch oath that has already run to completion (or run one live if timing allows).
+
+**Sub-shot A (25s) -- mid-epoch breach (drawdown):**
+
+- Equity drops through the drawdown ceiling.
+- `mark_breach()` button appears. Click it from a passerby wallet (not the Oathkeeper or Client -- anyone can call it).
 - Status flips to Broken. Reason: drawdown.
+- Voiceover: "Permissionless. No admin. No multisig. The breach condition is evaluated against on-chain state."
 
-## Shot 6 (45s) — Settle-time breach (Scenario D) — the dead-trader defense
+**Sub-shot B (25s) -- full settlement on Explorer:**
 
-- Open a different oath: trader never traded. Drawdown is fine — it never moved.
-- But oath required ≥10 trades and ≥5% PnL.
-- `settle_epoch()` triggers. Breach reasons: `insufficient_trades | underperformed`.
-- Doubters get paid from bond anyway. *"You can't bond capital and do nothing on Oathkeeper. The oath has teeth."*
+- Open a settled oath (use the pre-run Kept scenario or let the 2-min epoch expire).
+- Call `settle_epoch()`. Show the resulting transaction on Sui Explorer.
+- Each balance change is visible: oathkeeper, believer, doubter, platform, client. Five rows. They sum to zero.
+- `claim_payout()` -- Believer and Oathkeeper each claim from the settled oath.
+- Voiceover: "This is the product. Programmable conditional settlement. Capital moves automatically. No arbitration. Conservation holds on-chain."
 
-## Shot 7 (70s total) — Multi-vertical live + close
+---
 
-The roadmap-slide version of this shot is gone. Trading is the depth; this is the breadth proof. Both adapters are on-chain. Both demos are live (uptime real, behavior mock-but-honestly-labelled).
+## Shot 7 (30s) -- Roadmap card + close
 
-### 7a (30s) — RPC uptime, live attestation
+Do not show staged footage for unshipped features. This shot is a slide, not a live demo.
 
-- Cut to a new browser tab: an UptimeOath on `/oaths/[uptime-id]`.
-- Oath tuple visible: `uptime ≥ 99.5% / min_pings ≥ 1000 / 7-day epoch`. Bond: 200 USDC. Doubters staked: 75 USDC claim notional.
-- Live feed of signed prober reports streaming into the attestation table (timestamped, ed25519-signed by the prober's bound key).
-- Pull up one prober receipt on Sui Explorer to show it's a real on-chain object, not a UI mock.
-- Voiceover: *"Same Oath object. Same Doubter mechanism. Same settlement math. The only thing that changes is the attestation source — DeepBook fills for trading, signed prober pings for uptime."*
+**Roadmap integrations (10s slide):**
 
-### 7b (10s) — AI agent behavior, contract-level support
+- Walrus: encrypted oath-text blob storage (sealed_oath_text_root is currently an opaque arg)
+- Seal: t-of-n access control for authorized runtime decrypt
+- DeepBook V3: live on-chain order execution as TradingOath attestation source
+- UptimeOath + BehaviorOath: attestation adapters post-hackathon (enum and mint gate are live today)
 
-- Cut to `/oaths/[behavior-id]`.
-- Oath tuple: `behavior_score ≥ 9000/10000 across ≥ 20 judgments`. Bond: 50 USDC.
-- Voiceover (terse): *"Behavior bonds. Judge-attested. The judge is mocked for this demo — but the contract dispatch is real. Swap the judge for an LLM jury and this ships."*
-- Do not oversell. Naming the mock is the credibility move.
+"Each of these is a one-PR addition to a live, tested, conserved-on-chain core."
 
-### 7c (30s) — Close
+**Close (20s):**
 
-- Cut back to a clean closing card.
-- *"Three verticals. One protocol. Trading is what we shipped end-to-end. Uptime is what we proved generalizes. Behavior is what unlocks next. Oathkeeper is the commitment-market substrate."*
-- Close on: "Oathkeeper. Live on Sui mainnet. [URL]."
+- Return to the Browse page with real oaths on testnet.
+- Voiceover: "Oathkeeper. Programmable conditional settlement for any bonded commitment. Trading is what we shipped end-to-end. Uptime and Behavior are next. Live on Sui testnet. Package 0xa4c2f835...ee267d."
+- Close on: domain, testnet explorer link, GitHub.
 
-### Drop-if-cut behavior
-
-If the UptimeOath adapter was dropped at the Day-17 gate, Shot 7a collapses to a 10s slide ("UptimeOath enum variant, prober shipping post-hackathon") and Shot 7c absorbs the slack. Do not record a fake live demo for a vertical that isn't shipped.
+---
 
 ## What NOT to show
 
-- ❌ The contract code
-- ❌ The Walrus SDK calls
-- ❌ The signature-binding cryptography
-- ❌ "Powered by Move" claims without context
-- ❌ Architecture diagrams (those live in the README for judges who click through)
+- The contract source code
+- Walrus blob upload or download (roadmap)
+- Seal encrypt/decrypt flow (roadmap)
+- Real DeepBook order placement (roadmap)
+- A live uptime prober feed (roadmap)
+- Any shot implying mainnet deploy (scheduled Day 25, not yet done)
+- "Powered by Move" without context
+
+---
 
 ## Recording prep
 
-- Pre-fund 3 wallets (Oathkeeper, Doubter, LP)
-- Pre-mint Scenario A (kept), Scenario B (drawdown breach), Scenario D (dead-trader breach)
-- Pre-warm DeepBook orderbook with enough depth for the fills to land
-- Have the breach happen at a specific equity threshold the script controls
-- Browser zoom 125%, no extensions, clean profile, 1920×1080
+- Pre-fund 3 wallets: Oathkeeper wallet, Believer wallet, Doubter/passerby wallet
+- Pre-mint at least one Kept oath and one Broken (drawdown) oath using the 2-minute demo-epoch preset, so Shot 6 sub-shot B has a settled result ready
+- Use the permissionless USDC faucet for all wallets -- show it once in Shot 4
+- Browser: zoom 125%, no extensions, clean profile, 1920x1080
+- Have Sui Explorer open for: the mint PTB (Shot 3), a record_trade object (Shot 5), and the settled distribution tx (Shot 6)
+- Do not warm a DeepBook orderbook -- record_trade is exec-wallet attestation, not live order flow
