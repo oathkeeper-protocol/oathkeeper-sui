@@ -598,3 +598,106 @@ fun believer_double_claim_aborts() {
     test_scenario::return_shared(oath);
     test_scenario::end(scenario);
 }
+
+// ==================== AUDIT FIXES (security) ====================
+
+// OATH-1: self-dealing roles rejected at mint (client == promiser).
+#[test]
+#[expected_failure(abort_code = oathkeeper::oath::ESelfDealingRole)]
+fun mint_aborts_when_client_equals_promiser() {
+    let mut scenario = test_scenario::begin(test_utils::deployer());
+    registry::init_for_testing(test_scenario::ctx(&mut scenario));
+    test_scenario::next_tx(&mut scenario, test_utils::promiser());
+    let mut registry = test_scenario::take_shared<Registry>(&scenario);
+    let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
+    let bond = test_utils::mint_usdc(10_000, test_scenario::ctx(&mut scenario));
+    let reservation = oath::start_epoch<USDC>(
+        &mut registry, oath::trading_oath(), test_utils::default_dims(),
+        test_utils::default_scope(test_utils::exec_addr()),
+        bond, test_utils::promiser(), 5_000, // client == sender(promiser)
+        b"b", 1, 100_000, &clock, test_scenario::ctx(&mut scenario),
+    );
+    oath::bind_exec_wallet<USDC>(reservation, b"", b"", 0, 9_000_000_000_000, &mut registry, &clock, test_scenario::ctx(&mut scenario));
+    clock::destroy_for_testing(clock);
+    test_scenario::return_shared(registry);
+    test_scenario::end(scenario);
+}
+
+// OATH-4: max_drawdown_bps > 10000 rejected at mint (overflow guard).
+#[test]
+#[expected_failure(abort_code = oathkeeper::oath::EDrawdownBpsTooHigh)]
+fun mint_aborts_drawdown_bps_too_high() {
+    let mut scenario = test_scenario::begin(test_utils::deployer());
+    registry::init_for_testing(test_scenario::ctx(&mut scenario));
+    test_scenario::next_tx(&mut scenario, test_utils::promiser());
+    let mut registry = test_scenario::take_shared<Registry>(&scenario);
+    let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
+    let bond = test_utils::mint_usdc(10_000, test_scenario::ctx(&mut scenario));
+    let bad = oath::new_dimensions(10_001, 10, 500, 0); // > MAX_BPS
+    let reservation = oath::start_epoch<USDC>(
+        &mut registry, oath::trading_oath(), bad,
+        test_utils::default_scope(test_utils::exec_addr()),
+        bond, test_utils::client_addr(), 5_000, b"b", 1, 100_000, &clock, test_scenario::ctx(&mut scenario),
+    );
+    oath::bind_exec_wallet<USDC>(reservation, b"", b"", 0, 9_000_000_000_000, &mut registry, &clock, test_scenario::ctx(&mut scenario));
+    clock::destroy_for_testing(clock);
+    test_scenario::return_shared(registry);
+    test_scenario::end(scenario);
+}
+
+// OATH-2: Kept with Doubters but NO Believers — the 70% must not strand in the pool.
+#[test]
+fun settle_kept_no_believers_does_not_strand_winner_pool() {
+    let mut scenario = mint_oath(5_000);
+
+    // Doubter stakes 1000; no believer stakes.
+    test_scenario::next_tx(&mut scenario, test_utils::doubter());
+    let mut oath = test_scenario::take_shared<Oath<USDC>>(&scenario);
+    let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
+    doubter::stake_against<USDC>(&mut oath, test_utils::mint_usdc(1_000, test_scenario::ctx(&mut scenario)), &clock, test_scenario::ctx(&mut scenario));
+    clock::destroy_for_testing(clock);
+    test_scenario::return_shared(oath);
+
+    satisfy_dims(&mut scenario);
+    settle(&mut scenario);
+
+    test_scenario::next_tx(&mut scenario, test_utils::deployer());
+    let oath = test_scenario::take_shared<Oath<USDC>>(&scenario);
+    assert!(oath::status(&oath) == oath::status_settled());
+    // The 70% (700) was routed to platform, not stranded.
+    assert!(oath::winner_payout_pool_value(&oath) == 0);
+    assert!(oath::winner_stakes_remaining(&oath) == 0);
+    test_scenario::return_shared(oath);
+
+    // Platform (deployer) received 10% (100) + redirected 70% (700) = 800.
+    test_scenario::next_tx(&mut scenario, test_utils::deployer());
+    let p1 = test_scenario::take_from_sender<coin::Coin<USDC>>(&scenario);
+    let p2 = test_scenario::take_from_sender<coin::Coin<USDC>>(&scenario);
+    assert!(coin::value(&p1) + coin::value(&p2) == 800);
+    test_utils::burn_usdc(p1);
+    test_utils::burn_usdc(p2);
+    test_scenario::end(scenario);
+}
+
+// OATH-5: drawdown breached mid-epoch then recovered, no mark_breach — settle still Broken.
+#[test]
+fun settle_broken_via_drawdown_low_water_mark() {
+    let mut scenario = mint_oath(5_000);
+
+    test_scenario::next_tx(&mut scenario, test_utils::promiser());
+    let mut oath = test_scenario::take_shared<Oath<USDC>>(&scenario);
+    // Dip below the 20% floor (80000) to 70000, then recover above the pnl floor.
+    oath::record_equity_update<USDC>(&mut oath, 70_000, 1000);
+    let mut i = 0;
+    while (i < 10) { oath::record_equity_update<USDC>(&mut oath, 110_000, 1000); i = i + 1; };
+    test_scenario::return_shared(oath);
+
+    settle(&mut scenario);
+
+    test_scenario::next_tx(&mut scenario, test_utils::deployer());
+    let oath = test_scenario::take_shared<Oath<USDC>>(&scenario);
+    assert!(oath::status(&oath) == oath::status_settled());
+    assert!(oath::breach_reason(&oath).is_some()); // Broken via drawdown low-water-mark
+    test_scenario::return_shared(oath);
+    test_scenario::end(scenario);
+}

@@ -35,6 +35,13 @@ const ESignatureInvalid: u64 = 13;
 const EScopeAlreadyReservedEarlyCheck: u64 = 14;
 const EZeroClientClaim: u64 = 15;
 const EClientClaimExceedsBond: u64 = 16;
+const ESelfDealingRole: u64 = 17;       // promiser/client/exec must be distinct (anti self-breach-harvest)
+const EDrawdownBpsTooHigh: u64 = 18;     // max_drawdown_bps must be <= 10000
+const EMinPnlBpsTooHigh: u64 = 19;       // min_pnl_bps bounded to prevent settle overflow
+
+// === Dimension bounds ===
+const MAX_BPS: u64 = 10_000;
+const MAX_MIN_PNL_BPS: u64 = 1_000_000; // 100x; keeps starting_equity*(10000+pnl) in u128 range
 
 // === Status constants ===
 const STATUS_ACTIVE: u8 = 0;
@@ -113,6 +120,9 @@ public struct Oath<phantom T> has key {
     // --- Performance tracking ---
     starting_equity_usdc: u64,
     current_equity_usdc: u64,
+    /// Lowest equity ever attested this epoch. Lets settle_epoch enforce the drawdown
+    /// floor even if equity dipped below it mid-epoch and recovered (audit OATH-5).
+    min_equity_usdc: u64,
     cumulative_volume_usdc: u64,
     trade_count: u64,
     // --- State ---
@@ -184,11 +194,22 @@ public fun start_epoch<T>(
     ctx: &mut TxContext,
 ): ScopeReservation<T> {
     assert!(dims.min_trades >= 1, EMinTradesTooLow);
+    // Dimension bounds: prevent settle_epoch / mark_breach arithmetic from overflowing or
+    // underflowing on hostile inputs (which would permanently abort settlement and lock funds).
+    assert!(dims.max_drawdown_bps <= MAX_BPS, EDrawdownBpsTooHigh);
+    assert!(dims.min_pnl_bps <= MAX_MIN_PNL_BPS, EMinPnlBpsTooHigh);
     let bond_value = coin::value(&bond);
     assert!(bond_value > 0, EZeroBond);
     assert!(starting_equity_usdc > 0, EZeroStartingEquity);
     assert!(client_claim > 0, EZeroClientClaim);
     assert!(client_claim <= bond_value, EClientClaimExceedsBond);
+    // Anti self-breach-harvest: promiser, client, and exec wallet must be distinct parties.
+    // Otherwise an operator could be their own Client, attract Believer stakes, and force a
+    // Broken settlement to recover the bond AND sweep the Believer pool. See audit OATH-1.
+    let promiser_addr = tx_context::sender(ctx);
+    assert!(client != promiser_addr, ESelfDealingRole);
+    assert!(scope.exec_addr != promiser_addr, ESelfDealingRole);
+    assert!(client != scope.exec_addr, ESelfDealingRole);
     assert!(
         scope.venue == VENUE_DEEPBOOK || scope.venue == VENUE_HYPERLIQUID,
         EVenueUnknown,
@@ -209,7 +230,7 @@ public fun start_epoch<T>(
         dims.min_pnl_bps, dims.min_volume_usdc, tag,
     );
 
-    let promiser = tx_context::sender(ctx);
+    let promiser = promiser_addr;
     assert!(
         !registry::has_scope(registry, promiser, scope_hash),
         EScopeAlreadyReservedEarlyCheck,
@@ -286,6 +307,7 @@ public fun bind_exec_wallet<T>(
         epoch_end_ms,
         starting_equity_usdc,
         current_equity_usdc: starting_equity_usdc,
+        min_equity_usdc: starting_equity_usdc,
         cumulative_volume_usdc: 0,
         trade_count: 0,
         status: STATUS_ACTIVE,
@@ -308,7 +330,7 @@ public fun bind_exec_wallet<T>(
 public entry fun mark_breach<T>(oath: &mut Oath<T>, _clock: &Clock) {
     assert!(oath.status == STATUS_ACTIVE, ENotActive);
     let floor = (((oath.starting_equity_usdc as u128)
-        * ((10000 - oath.dims.max_drawdown_bps) as u128) / 10000) as u64);
+        * ((MAX_BPS - oath.dims.max_drawdown_bps) as u128) / 10000) as u64);
     assert!(oath.current_equity_usdc < floor, EDrawdownNotBreached);
 
     oath.status = STATUS_BROKEN;
@@ -347,7 +369,14 @@ public entry fun settle_epoch<T>(
     assert!(clock::timestamp_ms(clock) >= oath.epoch_end_ms, EEpochNotEnded);
 
     if (oath.status == STATUS_ACTIVE) {
-        if (oath.trade_count < oath.dims.min_trades) {
+        // Drawdown is enforced against the low-water-mark, so a mid-epoch breach that nobody
+        // called mark_breach on (and that later recovered) still settles BROKEN (audit OATH-5).
+        let dd_floor = (((oath.starting_equity_usdc as u128)
+            * ((MAX_BPS - oath.dims.max_drawdown_bps) as u128) / 10000) as u64);
+        if (oath.min_equity_usdc < dd_floor) {
+            oath.breach_reason = option::some(BREACH_DRAWDOWN);
+            oath.status = STATUS_BROKEN;
+        } else if (oath.trade_count < oath.dims.min_trades) {
             oath.breach_reason = option::some(BREACH_MIN_TRADES);
             oath.status = STATUS_BROKEN;
         } else if (oath.cumulative_volume_usdc < oath.dims.min_volume_usdc) {
@@ -369,6 +398,9 @@ public entry fun settle_epoch<T>(
     let mut bond_to_promiser = 0u64;
     let mut bond_to_client = 0u64;
     let mut bond_residual_to_platform = 0u64;
+    // The 70% winner tranche redirected to the platform when the winning side has zero
+    // positions (otherwise it would be stranded in winner_payout_pool forever — audit OATH-2).
+    let mut winner_to_platform = 0u64;
 
     if (oath.status == STATUS_KEPT) {
         // Bond → Oathkeeper.
@@ -392,11 +424,23 @@ public entry fun settle_epoch<T>(
             );
         };
         // Remaining doubter_pool (70%) + entire believer_pool → winner_payout_pool.
-        let remaining_loser = balance::withdraw_all(&mut oath.doubter_pool);
-        balance::join(&mut oath.winner_payout_pool, remaining_loser);
+        let mut remaining_loser = balance::withdraw_all(&mut oath.doubter_pool);
         let winners_own = balance::withdraw_all(&mut oath.believer_pool);
-        balance::join(&mut oath.winner_payout_pool, winners_own);
-        oath.winner_stakes_remaining = oath.total_believer_stakes;
+        if (oath.total_believer_stakes == 0) {
+            // No Believers to claim the 70% — route it to the platform instead of stranding it.
+            winner_to_platform = balance::value(&remaining_loser);
+            balance::join(&mut remaining_loser, winners_own);
+            if (balance::value(&remaining_loser) > 0) {
+                transfer::public_transfer(coin::from_balance(remaining_loser, ctx), platform);
+            } else {
+                balance::destroy_zero(remaining_loser);
+            };
+            oath.winner_stakes_remaining = 0;
+        } else {
+            balance::join(&mut oath.winner_payout_pool, remaining_loser);
+            balance::join(&mut oath.winner_payout_pool, winners_own);
+            oath.winner_stakes_remaining = oath.total_believer_stakes;
+        };
     } else {
         // STATUS_BROKEN.
         // Bond: client_claim → Client, residual → Platform.
@@ -434,11 +478,23 @@ public entry fun settle_epoch<T>(
             );
         };
         // Remaining believer_pool (70%) + entire doubter_pool → winner_payout_pool.
-        let remaining_loser = balance::withdraw_all(&mut oath.believer_pool);
-        balance::join(&mut oath.winner_payout_pool, remaining_loser);
+        let mut remaining_loser = balance::withdraw_all(&mut oath.believer_pool);
         let winners_own = balance::withdraw_all(&mut oath.doubter_pool);
-        balance::join(&mut oath.winner_payout_pool, winners_own);
-        oath.winner_stakes_remaining = oath.total_doubter_stakes;
+        if (oath.total_doubter_stakes == 0) {
+            // No Doubters to claim the 70% — route it to the platform instead of stranding it.
+            winner_to_platform = balance::value(&remaining_loser);
+            balance::join(&mut remaining_loser, winners_own);
+            if (balance::value(&remaining_loser) > 0) {
+                transfer::public_transfer(coin::from_balance(remaining_loser, ctx), platform);
+            } else {
+                balance::destroy_zero(remaining_loser);
+            };
+            oath.winner_stakes_remaining = 0;
+        } else {
+            balance::join(&mut oath.winner_payout_pool, remaining_loser);
+            balance::join(&mut oath.winner_payout_pool, winners_own);
+            oath.winner_stakes_remaining = oath.total_doubter_stakes;
+        };
     };
 
     registry::release_scope(registry, oath.promiser, oath.scope_hash);
@@ -461,9 +517,10 @@ public entry fun settle_epoch<T>(
         bond_to_promiser,
         bond_to_client,
         bond_residual_to_platform,
-        loser_to_platform: plat_evt,
+        // If the winning side was empty, the 70% was redirected to the platform.
+        loser_to_platform: plat_evt + winner_to_platform,
         loser_to_secondary: sec_evt,
-        loser_to_winners: win_evt,
+        loser_to_winners: win_evt - winner_to_platform,
     });
 }
 
@@ -524,6 +581,7 @@ public(package) fun record_equity_update<T>(
     oath: &mut Oath<T>, new_equity: u64, notional: u64,
 ) {
     oath.current_equity_usdc = new_equity;
+    if (new_equity < oath.min_equity_usdc) { oath.min_equity_usdc = new_equity; };
     oath.cumulative_volume_usdc = oath.cumulative_volume_usdc + notional;
     oath.trade_count = oath.trade_count + 1;
 }
