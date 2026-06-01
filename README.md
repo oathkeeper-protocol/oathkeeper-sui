@@ -193,8 +193,8 @@ The contract accepts `UptimeOath` and `BehaviorOath` at mint but has no attestat
 
 ## What is roadmap (not shipped)
 
-- **Walrus blob storage** -- `sealed_oath_text_root` is currently an opaque argument; actual Walrus upload/download pipeline is planned for Week 2
-- **Seal encryption + access control** -- Move access-condition module not written yet
+- **Walrus mint-flow wiring** -- blob store/read is **shipped + round-trip-verified on testnet** (`pnpm walrus:demo`, `agent/src/walrus`); the remaining step is having mint call `storeBlob(oathText)` and commit the returned blobId as `sealed_oath_text_root`
+- **Seal encryption + access control** -- Move access-condition module not written yet (Walrus is the storage half, shipped; Seal is the confidentiality half, roadmap)
 - **DeepBook order execution** -- agent runner placing real testnet orders is Week 3 work
 - **ecdsa_k1 real verify** -- Hyperliquid venue binding uses pass-through today; real `secp256k1_ecrecover` lands Day 16
 - **On-chain Standing module** -- standing is computed from events; a queryable on-chain object is v2
