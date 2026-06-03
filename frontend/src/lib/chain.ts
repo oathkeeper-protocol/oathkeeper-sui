@@ -68,6 +68,8 @@ export function mapOath(content: unknown): Oath | null {
     // Dispute fields exist only on the hardened package; default safely on older objects.
     disputed: Boolean(f.disputed),
     disputeCount: Number(f.dispute_count ?? 0),
+    // verifiability_tier exists only on the witnessed-tier package; default SELF_REPORTED (0).
+    verifiabilityTier: Number(f.verifiability_tier ?? 0) === 1 ? "WITNESSED" : "SELF_REPORTED",
   };
 }
 

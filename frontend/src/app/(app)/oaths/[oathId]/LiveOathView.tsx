@@ -459,6 +459,31 @@ export default function LiveOathView({
               </span>
             )}
           </div>
+          {(() => {
+            const witnessed = (o.verifiabilityTier ?? "SELF_REPORTED") === "WITNESSED";
+            return (
+              <div
+                className="inline-flex items-center gap-2 mb-3 font-mono"
+                style={{
+                  fontSize: "0.62rem",
+                  fontWeight: 600,
+                  letterSpacing: "0.04em",
+                  color: witnessed ? "var(--sage-deep)" : "var(--bone-600)",
+                  background: witnessed ? "var(--cream-deep)" : "transparent",
+                  border: `1px solid ${witnessed ? "var(--sage-deep)" : "var(--bone-200)"}`,
+                  borderRadius: 6,
+                  padding: "0.25rem 0.5rem",
+                }}
+                title={
+                  witnessed
+                    ? "DeepBook capture-at-execution: dimensions derived from on-chain fills + balance(). Drawdown-survival is trustless; other dims are witnessed (not wash-proof)."
+                    : "Operator self-reports fills via record_trade. The reconciler can flag fabrications (DISPUTABLE), but settlement trusts the inputs."
+                }
+              >
+                {witnessed ? "WITNESSED · DeepBook" : "SELF-REPORTED · disputable"}
+              </div>
+            );
+          })()}
           <p
             className="leading-relaxed mb-3"
             style={{ fontSize: "0.82rem", color: "var(--bone-800)" }}

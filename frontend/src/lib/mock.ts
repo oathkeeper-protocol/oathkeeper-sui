@@ -139,6 +139,8 @@ export interface Oath {
   disputed?: boolean;
   /** Number of disputes filed (durable, monotonic on-chain counter). */
   disputeCount?: number;
+  /** Verifiability tier: WITNESSED (DeepBook capture-at-execution) vs SELF_REPORTED. */
+  verifiabilityTier?: "WITNESSED" | "SELF_REPORTED";
 }
 
 // ─── Time helpers for stable relative timestamps ────────────────────────────
