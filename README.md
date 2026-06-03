@@ -138,6 +138,19 @@ on a proven dispute is the bonded-optimistic challenge-window layer — roadmap,
 so the demo never overclaims. Run `pnpm recon:demo` to watch the reconciler catch a
 fabricated fill with one command.
 
+**Witnessed tier (the trustless construction, core shipped).** Because Move can't read
+historical events, a settle-time "read the fills" is impossible — the only Move-enforceable
+trustless form is **capture-at-execution**: the operator trades *through* the oath, so the
+contract records DeepBook's own returned executed amounts + an on-chain `balance()` equity
+anchor; the operator supplies no numbers. Oaths carry a `verifiability_tier` (`WITNESSED` vs
+`SELF_REPORTED`), enforced in-contract (`record_trade` is rejected on WITNESSED oaths). The
+**core logic + 6 tests are shipped** (59 Move tests; mint+anchor, record_trade rejection,
+Kept, drawdown low-water-mark Broken, dead-operator Broken). Honest limit: only
+drawdown-survival is wash-resistant; other dims are witnessed, not wash-proof. The thin
+DeepBook-calling glue (`trade_via_deepbook`) is written (`.context/deepbook-spike/`) and
+lands with the live testnet spike (it needs a Sui-CLI/address-management step + gas — see
+the plan).
+
 ---
 
 ## OathType enum
@@ -174,7 +187,8 @@ The contract accepts `UptimeOath` and `BehaviorOath` at mint but has no attestat
 | Layer | Status | Notes |
 |-------|--------|-------|
 | Move contracts | Shipped | 7 protocol modules + 1 mock USDC module; zero `abort 0` bodies |
-| Move tests | **53 passing, 0 failing** | Conservation checks for both Kept and Broken outcomes; dispute-record tests |
+| Move tests | **59 passing, 0 failing** | Conservation (Kept + Broken), dispute-record, and witnessed-tier tests |
+| Witnessed tier (core) | Shipped (contract + tests) | `verifiability_tier` (WITNESSED/SELF_REPORTED) + chain-anchored equity + witnessed-fill settlement; `record_trade` rejected on WITNESSED oaths. DeepBook glue (`trade_via_deepbook`) written, pending the live spike. |
 | Reconciliation verifier | Shipped | `agent/src/recon` — pure deterministic core (8 vitest cases), venue adapters (DeepBook live / fixture / unverifiable), `pnpm reconcile` CLI + `pnpm recon:demo` |
 | On-chain dispute record | Shipped (contract) | `dispute_attestation` records durable `disputed` + `dispute_count`; reconciler files them. *(Live on testnet pending a redeploy — see roadmap.)* |
 | ed25519 signature verification | Shipped (Day 6) | `sui::ed25519` + `blake2b256(0x00 || pk)` address derivation; proven with offline vector in `ed25519_real_signature_verifies` test |
