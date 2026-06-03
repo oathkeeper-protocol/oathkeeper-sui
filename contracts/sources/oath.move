@@ -59,6 +59,14 @@ const BREACH_MIN_VOLUME: u8 = 3;
 const VENUE_DEEPBOOK: u8 = 0;
 const VENUE_HYPERLIQUID: u8 = 1;
 
+// === Verifiability tier ===
+// SELF_REPORTED: dimensions come from the operator's record_trade attestations (trusted input).
+// WITNESSED: dimensions come from DeepBook fills captured at execution + an on-chain balance()
+// equity anchor (operator-unforgeable on the drawdown dimension). See
+// docs/brainstorms/2026-06-03-trustless-deepbook-vertical-requirements.md.
+const TIER_SELF_REPORTED: u8 = 0;
+const TIER_WITNESSED: u8 = 1;
+
 // === Signature scheme (mirrors signature module) ===
 const SCHEME_ED25519: u8 = 0;
 const SCHEME_ECDSA_K1: u8 = 1;
@@ -135,6 +143,8 @@ public struct Oath<phantom T> has key {
     /// slashing is the bonded-optimistic resolution layer — roadmap (see ARCHITECTURE.md).
     disputed: bool,
     dispute_count: u64,
+    /// SELF_REPORTED (default) vs WITNESSED (DeepBook capture-at-execution). Stamped at mint.
+    verifiability_tier: u8,
 }
 
 // === Hot Potato ===
@@ -151,6 +161,7 @@ public struct ScopeReservation<phantom T> {
     sealed_oath_text_root: vector<u8>,
     binding_nonce: u64,
     starting_equity_usdc: u64,
+    tier: u8,
 }
 
 // === Events ===
@@ -255,6 +266,21 @@ public fun start_epoch<T>(
         sealed_oath_text_root,
         binding_nonce,
         starting_equity_usdc,
+        tier: TIER_SELF_REPORTED,
+    }
+}
+
+/// Mark a reservation as WITNESSED (DeepBook capture-at-execution tier) before binding.
+/// Called package-internally by the witnessed mint path; the self-reported path leaves the
+/// default. Consumes and returns the hot potato (it has no abilities) with the tier flipped.
+public(package) fun mark_reservation_witnessed<T>(r: ScopeReservation<T>): ScopeReservation<T> {
+    let ScopeReservation<T> {
+        promiser, scope_hash, bond, oath_type, dims, scope, client, client_claim,
+        sealed_oath_text_root, binding_nonce, starting_equity_usdc, tier: _,
+    } = r;
+    ScopeReservation<T> {
+        promiser, scope_hash, bond, oath_type, dims, scope, client, client_claim,
+        sealed_oath_text_root, binding_nonce, starting_equity_usdc, tier: TIER_WITNESSED,
     }
 }
 
@@ -277,7 +303,7 @@ public fun bind_exec_wallet<T>(
     let ScopeReservation<T> {
         promiser, scope_hash, bond, oath_type, dims, scope,
         client, client_claim, sealed_oath_text_root, binding_nonce,
-        starting_equity_usdc,
+        starting_equity_usdc, tier,
     } = reservation;
 
     let now_ms = clock::timestamp_ms(clock);
@@ -321,6 +347,7 @@ public fun bind_exec_wallet<T>(
         breach_reason: option::none<u8>(),
         disputed: false,
         dispute_count: 0,
+        verifiability_tier: tier,
     };
 
     let oath_id = object::id(&oath);
@@ -559,6 +586,9 @@ public fun winner_payout_pool_value<T>(o: &Oath<T>): u64 { balance::value(&o.win
 public fun winner_stakes_remaining<T>(o: &Oath<T>): u64 { o.winner_stakes_remaining }
 public fun disputed<T>(o: &Oath<T>): bool { o.disputed }
 public fun dispute_count<T>(o: &Oath<T>): u64 { o.dispute_count }
+public fun verifiability_tier<T>(o: &Oath<T>): u8 { o.verifiability_tier }
+public fun tier_self_reported(): u8 { TIER_SELF_REPORTED }
+public fun tier_witnessed(): u8 { TIER_WITNESSED }
 
 public fun max_drawdown_bps(d: &OathDimensions): u64 { d.max_drawdown_bps }
 public fun min_trades(d: &OathDimensions): u64 { d.min_trades }

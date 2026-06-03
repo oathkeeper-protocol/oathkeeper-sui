@@ -21,6 +21,8 @@ const EOathNotActive: u64 = 0;
 const EAssetNotAllowed: u64 = 1;
 const EEpochEnded: u64 = 2;
 const ENotExecAddr: u64 = 3;
+/// record_trade is the SELF_REPORTED path; WITNESSED oaths must use witnessed::trade_via_deepbook.
+const ETierMismatch: u64 = 4;
 
 // === Events ===
 
@@ -61,6 +63,9 @@ public entry fun record_trade<T>(
 ) {
     // --- Gates ---
     assert!(oath::status(oath) == oath::status_active(), EOathNotActive);
+    // Self-reported attestation is only valid for SELF_REPORTED oaths. WITNESSED (DeepBook)
+    // oaths derive their dimensions from on-chain fills and reject operator-supplied numbers.
+    assert!(oath::verifiability_tier(oath) == oath::tier_self_reported(), ETierMismatch);
     let now_ms = clock::timestamp_ms(clock);
     assert!(now_ms < oath::epoch_end_ms(oath), EEpochEnded);
 
