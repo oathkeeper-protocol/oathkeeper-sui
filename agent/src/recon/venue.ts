@@ -92,3 +92,83 @@ export class DeepBookVenueSource implements VenueSource {
     return out;
   }
 }
+
+/** Raw DeepBook v3 `OrderFilled` event shape (parsedJson). Quantities/timestamp are u64 strings. */
+export interface OrderFilledEvent {
+  base_quantity: string;
+  quote_quantity: string;
+  price: string;
+  maker_balance_manager_id: string;
+  taker_balance_manager_id: string;
+  timestamp: string;
+}
+
+/**
+ * PURE mapper: DeepBook `OrderFilled` events -> VenueFills for one BalanceManager. The operator
+ * is the maker or taker on a fill iff their bound BalanceManager id matches. notional is the
+ * quote_quantity (the oath's quote denomination); venueTxHash is the fill's tx digest, which is
+ * what a self-reporting operator references in an attestation. Deterministic and I/O-free, so it
+ * is unit-tested with fixtures.
+ */
+export function fillsFromOrderFilled(
+  events: { txDigest: string; parsedJson: OrderFilledEvent }[],
+  balanceManagerId: string,
+  assetLabel: string,
+): VenueFill[] {
+  const out: VenueFill[] = [];
+  for (const e of events) {
+    const j = e.parsedJson;
+    const involved = j.taker_balance_manager_id === balanceManagerId || j.maker_balance_manager_id === balanceManagerId;
+    if (!involved) continue;
+    out.push({
+      venueTxHash: e.txDigest,
+      asset: assetLabel,
+      notional: BigInt(j.quote_quantity),
+      timestampMs: Number(j.timestamp),
+    });
+  }
+  return out;
+}
+
+/**
+ * Live, FILL-LEVEL DeepBook source for the DISPUTABLE detection layer. Parses `OrderFilled`
+ * events for the operator's bound BalanceManager, so the reconciler can cross-check a
+ * self-reporting operator's attested notional against the venue's own fills (existenceOnly=false).
+ *
+ * This is detection, NOT trustless settlement — for WITNESSED oaths the contract already settles
+ * on-chain. It powers the honest DISPUTABLE tier (maker/limit fills, Hyperliquid bridging, etc.).
+ */
+export class DeepBookOrderFilledVenueSource implements VenueSource {
+  readonly name = 'deepbook-orderfilled';
+  readonly existenceOnly = false;
+  readonly authoritative: boolean;
+  constructor(
+    private readonly client: SuiJsonRpcClient,
+    private readonly deepbookPackageId: string | undefined,
+    private readonly balanceManagerId: string,
+    private readonly assetLabel = '',
+  ) {
+    this.authoritative = !!deepbookPackageId && deepbookPackageId !== '0x0';
+  }
+
+  async fills(): Promise<VenueFill[]> {
+    if (!this.authoritative) return [];
+    const fullType = `${this.deepbookPackageId}::order_info::OrderFilled`;
+    const collected: { txDigest: string; parsedJson: OrderFilledEvent }[] = [];
+    let cursor: { txDigest: string; eventSeq: string } | null = null;
+    for (let page = 0; page < 50; page++) {
+      const res = await this.client.queryEvents({
+        query: { MoveEventType: fullType },
+        cursor: cursor ?? undefined,
+        limit: 50,
+        order: 'ascending',
+      });
+      for (const e of res.data) {
+        collected.push({ txDigest: e.id.txDigest, parsedJson: e.parsedJson as OrderFilledEvent });
+      }
+      if (!res.hasNextPage || !res.nextCursor) break;
+      cursor = res.nextCursor;
+    }
+    return fillsFromOrderFilled(collected, this.balanceManagerId, this.assetLabel);
+  }
+}
