@@ -31,8 +31,10 @@ const VERTICALS: {
   status: "live" | "soon";
 }[] = [
   { key: "TradingOath", label: "Trading", blurb: "DeepBook / Hyperliquid fills", status: "live" },
-  { key: "UptimeOath", label: "Uptime", blurb: "HTTPS endpoint availability", status: "live" },
-  { key: "BehaviorOath", label: "Behavior", blurb: "Judge-attested conduct", status: "live" },
+  // Uptime/Behavior have no attestation adapter shipped — enum-only. Marked roadmap so the
+  // mint form never lets someone create an un-attestable oath (audit honesty fix).
+  { key: "UptimeOath", label: "Uptime", blurb: "HTTPS prober (roadmap)", status: "soon" },
+  { key: "BehaviorOath", label: "Behavior", blurb: "Judge attestation (roadmap)", status: "soon" },
   { key: "ValidatorOath", label: "Validator", blurb: "Block production / slashing", status: "soon" },
   { key: "TreasuryOath", label: "Treasury", blurb: "Reserve solvency floor", status: "soon" },
 ];
@@ -47,9 +49,10 @@ const EPOCHS = [
   { label: "30d", ms: 2_592_000_000 },
 ];
 
+// The real PTB: start_epoch (validate + reserve scope) -> bind_exec_wallet (bind + share),
+// atomic in one transaction. No Walrus/Seal step yet (that pipeline is wired separately).
 const MINT_STEPS = [
-  "Sealing oath text",
-  "Storing on Walrus",
+  "Validating dimensions",
   "Reserving scope",
   "Binding exec wallet",
   "Sharing oath",
@@ -332,8 +335,8 @@ export default function MintPage() {
           style={{ color: "var(--bone-600)" }}
         >
           <LockIcon />
-          Sealed via Seal, stored on Walrus. The public claim stays plain; the
-          method stays private.
+          Committed on-chain as the oath&rsquo;s text reference. Encrypted storage on
+          Walrus + Seal (so the method stays private) is on the roadmap.
         </p>
       </Section>
 
@@ -500,7 +503,9 @@ export default function MintPage() {
               })}
             </div>
             <p className="font-mono mb-4" style={{ fontSize: "0.6rem", color: "var(--bone-600)" }}>
-              Binding uses the pass-through path on testnet (venue=1). No real exec signature required.
+              Testnet binds via the pass-through path (venue=1) for both venues — no real exec
+              signature required. Real ed25519 DeepBook binding + on-chain fill reconciliation
+              (the trustless attestation path) is the roadmap.
             </p>
 
             <FieldLabel>Allowed assets</FieldLabel>

@@ -5,6 +5,12 @@
   "description": "Off-chain runtime for Oathkeeper-Sui: Walrus + Seal pipeline, DeepBook agent runner, reconciliation indexer, HTTPS uptime prober.",
   "type": "module",
   "scripts": {
+    "reconcile": "tsx src/recon/cli.ts",
+    "recon:demo": "tsx src/recon/demo.ts",
+    "verify": "tsx src/recon/verify.ts",
+    "walrus:store": "tsx src/walrus/cli.ts store",
+    "walrus:read": "tsx src/walrus/cli.ts read",
+    "walrus:demo": "tsx src/walrus/cli.ts demo",
     "indexer": "tsx watch src/indexer/index.ts",
     "indexer:once": "tsx src/indexer/index.ts",
     "runner": "tsx watch src/runner/index.ts",

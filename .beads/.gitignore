@@ -1,0 +1,6 @@
+# Beads local cache — regenerated from issues.jsonl; not tracked
+beads.db
+beads.db-shm
+beads.db-wal
+.local_version
+last-touched

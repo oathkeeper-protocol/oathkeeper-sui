@@ -135,6 +135,12 @@ export interface Oath {
   explorerUrl?: string;
   /** Bound exec wallet address (from scope.exec_addr). Live oaths only. */
   execAddr?: string;
+  /** True once a dispute has been filed against this oath's attestations (hardened package). */
+  disputed?: boolean;
+  /** Number of disputes filed (durable, monotonic on-chain counter). */
+  disputeCount?: number;
+  /** Verifiability tier: WITNESSED (DeepBook capture-at-execution) vs SELF_REPORTED. */
+  verifiabilityTier?: "WITNESSED" | "SELF_REPORTED";
 }
 
 // ─── Time helpers for stable relative timestamps ────────────────────────────
