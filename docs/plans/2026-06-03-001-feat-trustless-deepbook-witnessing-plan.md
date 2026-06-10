@@ -203,7 +203,7 @@ graph TB
 - Settlement matrix: one Kept + one Broken-per-reason sequence, conservation still holds (reuse existing conservation assertions).
 **Verification:** `sui move test` green with the full witnessed matrix; total test count rises from 53.
 
-- [ ] **Unit 6: Reconciler upgrade — parse `OrderFilled` events (GAS-FREE; off-chain, non-gating)**
+- [x] **Unit 6: Reconciler — parse `OrderFilled` events (GAS-FREE; DONE — commit c2b3899)** *(pure fillsFromOrderFilled + live DeepBookOrderFilledVenueSource, existenceOnly=false; 4 vitest cases, agent 10→14 green)*
 
 **Goal:** Upgrade the off-chain reconciler from digest-existence to fill-level via `OrderFilled` events, as a NON-gating DISPUTABLE detection layer for maker/limit + Hyperliquid.
 **Requirements:** R8.
@@ -219,7 +219,7 @@ graph TB
 - Edge case: existenceOnly=false enables the mismatch (asset/qty) check.
 **Verification:** `pnpm test` green; `pnpm reconcile` against a witnessed oath reports fill-level findings labeled DISPUTABLE/detection.
 
-- [ ] **Unit 7: `verifiability_tier` badge + split-screen demo (GAS-FREE build; touches frontend)**
+- [x] **Unit 7: `verifiability_tier` badge (GAS-FREE; DONE — commit 714d25e)** *(defensive tier read + WITNESSED/SELF-REPORTED badge in the Verification panel; build clean. Split-screen demo deferred — needs witnessed data live = gas.)*
 
 **Goal:** Surface the tier honestly and ship the judge-runnable demo beat.
 **Requirements:** R5, R6, R10.
