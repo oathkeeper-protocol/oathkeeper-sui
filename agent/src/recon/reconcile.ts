@@ -95,12 +95,13 @@ export function reconcile(
     }
   }
 
-  const disputable = findings.some((f) => f.kind === 'fabricated' || f.kind === 'mismatch');
+  const hasSubstantiatedDispute =
+    opts.authoritative && findings.some((f) => f.kind === 'fabricated' || f.kind === 'mismatch');
 
   let verdict: Verdict;
   if (!opts.authoritative) {
     verdict = 'unverifiable';
-  } else if (disputable) {
+  } else if (hasSubstantiatedDispute) {
     verdict = 'discrepancies';
   } else {
     verdict = 'clean';
@@ -114,7 +115,7 @@ export function reconcile(
     matched,
     findings,
     verdict,
-    disputable,
+    disputable: hasSubstantiatedDispute,
   };
 }
 

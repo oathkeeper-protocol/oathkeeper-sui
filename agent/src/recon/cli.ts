@@ -117,7 +117,7 @@ async function main() {
   console.log(line);
   console.log(`RECONCILIATION  oath ${oathId}`);
   console.log(`venue=${venueName}  source=${source.name}  authoritative=${source.authoritative}`);
-  console.log(`attested fills: ${report.attestedCount}   venue fills: ${report.venueCount}   matched: ${report.matched}`);
+  console.log(`attested fills: ${report.attestedCount}   venue fills: ${report.venueCount}   matched: ${report.matched}   disputable=${report.disputable}`);
   console.log(line);
   if (report.verdict === 'clean') {
     console.log('VERDICT: ✓ CLEAN — every attested fill is backed by a real venue fill.');
@@ -128,8 +128,9 @@ async function main() {
     console.log('VERDICT: ✗ DISCREPANCIES — operator attested fills with no on-chain backing:');
   }
   for (const f of report.findings) {
-    const mark = f.kind === 'missing' ? '·' : '!';
-    console.log(`  [${mark} ${f.kind}] ${f.detail}`);
+    const mark = report.verdict === 'unverifiable' || f.kind === 'missing' ? '·' : '!';
+    const label = report.verdict === 'unverifiable' && f.kind !== 'missing' ? 'unverified' : f.kind;
+    console.log(`  [${mark} ${label}] ${f.detail}`);
   }
   console.log(line);
 
@@ -137,7 +138,7 @@ async function main() {
   if (hasFlag('--dispute')) {
     const disputable = report.findings.filter((f) => f.kind === 'fabricated' || f.kind === 'mismatch');
     if (!report.disputable) {
-      console.log('nothing disputable — no fabricated/mismatched fills.');
+      console.log('nothing disputable — no substantiated fabricated/mismatched fills from an authoritative venue source.');
     } else if (!env.deployerKey) {
       console.log(`${disputable.length} disputable finding(s), but OATHKEEPER_DEPLOYER_KEY is unset — skipping submission.`);
     } else {
