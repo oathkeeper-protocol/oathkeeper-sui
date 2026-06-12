@@ -4,7 +4,7 @@
 
 ## Project context
 
-**Oathkeeper-Sui** is a Sui Move re-implementation of a commitment-market protocol previously prototyped on 0G under the name *Orichalcos*. The Sui submission targets **Sui Overflow 2026 — DeFi & Payments track**, deadline **June 21, 2026**.
+**Oathkeeper-Sui** is a Sui Move re-implementation of a commitment-market protocol previously prototyped on 0G under the name *Orichalcos*. The Sui submission targets **Sui Overflow 2026 — DeFi & Payments track** (locked; a DeepBook-track pivot was investigated Jun 11 and rejected — the DeepBook track is *Predict*, which needs the prediction-market contract; see "Track strategy" below and `STRATEGY.md`), deadline **June 21, 2026**. Mainnet deploy is an explicit goal (claims 100% of any prize upfront per the award split).
 
 **Reference (do not copy wholesale):** the 0G prototype lives at `/Users/ammar.robb/Documents/Web3/hackathons/hackquest-0g/`. Read it freely for economic-design context, simulation math, and demo narrative. **Do not** translate Solidity line-by-line — Sui's object model is structurally different and a naive port will produce bad Move.
 
@@ -27,11 +27,14 @@
 
 ❌ Do NOT use: "trader" (use Oathkeeper), "challenger" (use Doubter), "promise" in serious prose (use Oath), "insurance" (use Bond/Stake/Settlement), "policy" (legacy 0G term), "prediction market" (structurally different), "bet on yourself" / "TSLA-market" framing, "protocol skims nothing" (protocol takes explicit 10% fee, disclosed).
 
-## Track strategy (locked — do not reopen)
+## Track strategy (locked — DeFi & Payments; reopened & RE-CONFIRMED Jun 11)
 
-- **Track:** DeFi & Payments only. Not Walrus. Not Agentic Web. Not DeepBook Predict.
-- **Reason:** Real-World Application is 50% of Sui's grade. Oathkeeper is a programmable money primitive — a market for verifiable behavioral commitments. That's a DeFi & Payments pitch, not an agent demo and not a memory-layer demo.
-- **Walrus is used, but it's plumbing, not the pitch.** Same with Seal. Same with DeepBook execution. Sui-native integration scores on the 20% Technical Implementation criterion, not the 50% Real-World one.
+> **Reopened Jun 11, 2026, investigated against the actual track problem statements, and re-confirmed.** A DeepBook-track pivot was considered (the shipped witnessing core looked like a natural fit, and DeepBook pays $35K vs $30K). **It was rejected after reading the real Notion statements:** the "DeepBook" specialized track IS *DeepBook Predict* — its mandatory minimum is *"Integrate deepbook **predict** contract on testnet"* (a vol-surface prediction-market protocol: `PredictManager`, `predict::mint`, `dUSDC`). Oathkeeper uses DeepBook **spot**, not Predict. Qualifying would mean gutting the witnessing thesis and rebuilding on the Predict contract — a different project, impossible in the remaining window, and it would force the prediction-market framing this project explicitly forbids. **DeFi & Payments is the correct home**, confirmed verbatim by its problem statement: *"Trust-Minimized Finance — reduce or eliminate the need for trust between parties by enforcing financial logic programmatically (milestone-based escrow, controlled treasury systems)"* + *"Vaults & Capital Management → portfolio allocators."* DeepBook integration there is explicitly *"tools, not requirements"* — so spot witnessing still scores on the 20% Technical criterion. See `STRATEGY.md`.
+
+- **Track:** DeFi & Payments only. Not DeepBook / DeepBook Predict (needs the Predict contract — we use spot). Not Walrus. Not Agentic Web.
+- **Reason:** Real-World Application is 50% of Sui's grade. Oathkeeper is trust-minimized programmable money — a market for verifiable behavioral commitments enforced in-contract. That's a DeFi & Payments pitch, not an agent demo and not a prediction market.
+- **Walrus/Seal/DeepBook-spot are plumbing, not the pitch.** Sui-native integration scores on the 20% Technical Implementation criterion, not the 50% Real-World one. Mainnet deploy is an explicit goal (unlocks 100% of any prize upfront per the award split).
+- **Lesson logged:** read the primary-source track statement BEFORE rewriting anchor docs. This fork cost turns because the pivot hit disk before the 5-minute Notion read that settled it.
 
 ## Multi-dimensional oath — the core anti-fraud mechanic
 
