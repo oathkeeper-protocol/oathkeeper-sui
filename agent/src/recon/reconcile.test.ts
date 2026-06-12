@@ -67,9 +67,9 @@ describe('reconcile', () => {
     const a = [attested('0xaa', 'BTC', 1000n)];
     const r = reconcile(OATH, a, [], { authoritative: false, venue: 'hyperliquid' });
     expect(r.verdict).toBe('unverifiable');
-    // every attested fill shows as fabricated against an empty record, but the honest
-    // verdict is 'unverifiable' — we can't prove fabrication without an authoritative source
-    expect(r.disputable).toBe(true);
+    // every attested fill lacks source backing, but without an authoritative venue source
+    // those gaps are not substantiated disputes.
+    expect(r.disputable).toBe(false);
   });
 
   it('all-fabricated when an authoritative venue has zero fills but attestations exist', () => {
