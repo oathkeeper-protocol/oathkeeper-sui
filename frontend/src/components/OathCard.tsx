@@ -15,7 +15,7 @@ import TierBadge from "./TierBadge";
  *   1. Operator identity (alias / address + StandingBadge)  — WHO
  *   2. Bond size (mono)                                     — HOW MUCH
  *   3. Market sentiment (Believer/Doubter)                  — WHAT the crowd thinks
- *   4. Client claim + SLA dimension chips                   — WHAT was promised
+ *   4. Client claim + SLA dimension chips                   — WHAT the oath covers
  *   5. Time remaining / outcome                             — WHEN it resolves
  *   6. View action                                          — WHAT I can do
  *

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import type { SentimentPoint } from "@/lib/chain";
 
 /**
- * SentimentChart — Polymarket-style "price of reliability" chart.
+ * SentimentChart — price-of-reliability chart.
  *
  * Renders the believer share of the total pool over time as a line at 0-100%.
  * A reference line at 50% separates the believers-favored from doubters-favored

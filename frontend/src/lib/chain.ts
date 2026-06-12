@@ -247,7 +247,7 @@ export async function fetchAttestations(
   return rows;
 }
 
-/** Cumulative believer/doubter pool series for an oath, from stake events (Polymarket-style). */
+/** Cumulative believer/doubter pool series for an oath, from stake events. */
 export interface SentimentPoint { ts: number; believer: number; doubter: number }
 
 export async function fetchSentimentSeries(client: SuiClient, oathId: string): Promise<SentimentPoint[]> {

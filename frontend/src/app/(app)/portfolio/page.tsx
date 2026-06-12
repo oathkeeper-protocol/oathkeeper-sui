@@ -166,7 +166,7 @@ function OathkeeperTab({ myOaths }: { myOaths: Oath[] }) {
           </div>
         ) : (
           <EmptyState
-            message="You have not minted any oaths yet. Mint one to put capital behind a service promise and start building Standing."
+            message="You have not minted any oaths yet. Mint one to put capital behind a service commitment and start building Standing."
             ctaLabel="Mint an oath"
             ctaHref="/mint"
           />

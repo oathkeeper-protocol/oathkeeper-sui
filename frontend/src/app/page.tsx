@@ -118,7 +118,7 @@ export default function Home() {
                 maxWidth: "52ch",
               }}
             >
-              Operators bond capital against promises. Clients register SLA claims
+              Operators bond capital against oaths. Clients register SLA claims
               against that bond. Open markets price reliability in real time.
               Settlement is automatic.
             </p>

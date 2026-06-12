@@ -538,7 +538,7 @@ export default function LiveOathView({
             Reconciliation is deterministic and non-gating: anyone can compare routed or
             reported fills to venue history and file{" "}
             <span className="font-mono">dispute_attestation</span>. The trustless headline
-            is WITNESSED drawdown survival, not a prediction-market oracle.
+            is WITNESSED drawdown survival, not an external outcome oracle.
           </p>
         </section>
       </div>

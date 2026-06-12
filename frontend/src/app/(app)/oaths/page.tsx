@@ -402,7 +402,7 @@ function EmptyState({ tab, status }: { tab: Vertical; status: StatusKey }) {
         style={{ color: "var(--bone-600)", maxWidth: "52ch", marginBottom: "1.5rem" }}
       >
         An oath is an operator&rsquo;s bonded SLA: capital posted against a
-        multi-dimensional promise, with open markets pricing whether it holds.
+        multi-dimensional commitment, with open markets pricing whether it holds.
         Post one to start building Standing.
       </p>
       <Link href="/mint" className="btn-primary">
