@@ -66,11 +66,8 @@ export default function SentimentChart({ series }: Props) {
     const reduced =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) {
-      setVisible(true);
-      return;
-    }
     const id = requestAnimationFrame(() => setVisible(true));
+    if (reduced) return () => cancelAnimationFrame(id);
     return () => cancelAnimationFrame(id);
   }, []);
 
@@ -100,8 +97,6 @@ export default function SentimentChart({ series }: Props) {
   const polyline = buildPolyline(pcts);
   const areaPath = buildAreaPath(pcts);
 
-  // Reference y for 50%
-  const midY = PAD.top + INNER_H / 2;
   // Latest point position
   const lastX =
     PAD.left + ((pcts.length - 1) / (pcts.length - 1)) * INNER_W;

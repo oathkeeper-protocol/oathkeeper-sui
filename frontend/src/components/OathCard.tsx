@@ -6,6 +6,7 @@ import StatusBadge from "./StatusBadge";
 import SentimentBar from "./SentimentBar";
 import DimChips from "./DimChips";
 import Countdown from "./Countdown";
+import TierBadge from "./TierBadge";
 
 /**
  * OathCard — one oath in the marketplace grid.
@@ -97,6 +98,9 @@ export default function OathCard({ oath }: { oath: Oath }) {
             {oath.oathType.replace("Oath", "")}
           </span>
           <StatusBadge status={oath.status} />
+          {oath.oathType === "TradingOath" && (
+            <TierBadge tier={oath.verifiabilityTier} compact />
+          )}
           {oath.onchain && (
             <span
               className="inline-flex items-center gap-1 font-mono"

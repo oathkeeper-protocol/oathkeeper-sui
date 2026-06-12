@@ -31,10 +31,12 @@ export default function DetailActionBar({ oath }: { oath: Oath }) {
   const queryClient = useQueryClient();
   const { mutate: signAndExecute } = useSignAndExecuteTransaction();
 
-  // Hydration guard: do NOT compute Date.now() in render (causes SSR mismatch).
-  // Gate all time-dependent buttons on this being true.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  // Hydration guard: store time in state so render stays deterministic.
+  const [nowMs, setNowMs] = useState<number | null>(null);
+  useEffect(() => {
+    const id = window.setTimeout(() => setNowMs(Date.now()), 0);
+    return () => window.clearTimeout(id);
+  }, []);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pending, setPending] = useState(false);
@@ -43,10 +45,12 @@ export default function DetailActionBar({ oath }: { oath: Oath }) {
 
   const oathId = oath.oathId;
   const onchain = !!oath.onchain;
+  const witnessed = (oath.verifiabilityTier ?? "SELF_REPORTED") === "WITNESSED";
+  const needsFinalAnchor = witnessed && !oath.balanceManagerId;
 
   // Compute gating conditions client-side (after mount to avoid hydration mismatch)
-  const now = mounted ? Date.now() : 0;
-  const epochEnded = now >= oath.epochEndMs;
+  const mounted = nowMs !== null;
+  const epochEnded = mounted && nowMs >= oath.epochEndMs;
   const drawdownFloor = oath.startingEquity * (1 - oath.dims.maxDrawdownBps / 10_000);
   const equityBreached = oath.currentEquity < drawdownFloor;
 
@@ -110,7 +114,7 @@ export default function DetailActionBar({ oath }: { oath: Oath }) {
   };
 
   const confirmSettle = () => {
-    if (!account || pending) return;
+    if (!account || pending || needsFinalAnchor) return;
     setPending(true);
     setTxError(null);
     setTxDigest(null);
@@ -199,6 +203,8 @@ export default function DetailActionBar({ oath }: { oath: Oath }) {
                 ? "Demo oath — actions are not available."
                 : txDigest
                 ? "Transaction confirmed."
+                : showSettle && needsFinalAnchor
+                ? "WITNESSED settlement needs the final DeepBook BalanceManager anchor before it can be submitted."
                 : showMarkBreach || showSettle
                 ? "Permissionless: anyone can trigger this on-chain."
                 : showClaim && myPosition
@@ -258,14 +264,21 @@ export default function DetailActionBar({ oath }: { oath: Oath }) {
               <button
                 type="button"
                 className="btn-primary"
-                disabled={pending || !account}
+                disabled={pending || !account || needsFinalAnchor}
                 style={{
-                  opacity: pending ? 0.6 : 1,
-                  cursor: pending ? "not-allowed" : "pointer",
+                  opacity: pending || needsFinalAnchor ? 0.6 : 1,
+                  cursor: pending || needsFinalAnchor ? "not-allowed" : "pointer",
                 }}
-                onClick={() => setConfirmOpen(true)}
+                onClick={() => {
+                  if (!needsFinalAnchor) setConfirmOpen(true);
+                }}
+                title={
+                  needsFinalAnchor
+                    ? "WITNESSED settlement must call the anchor-aware settle path with the oath's BalanceManager object."
+                    : undefined
+                }
               >
-                {pending ? "Settling..." : "Settle epoch"}
+                {pending ? "Settling..." : needsFinalAnchor ? "Awaiting anchor" : "Settle epoch"}
               </button>
             )}
 

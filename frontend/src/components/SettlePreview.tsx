@@ -21,6 +21,8 @@ export default function SettlePreview({
   oath: Oath;
   outcome: "Kept" | "Broken";
 }) {
+  const witnessed = (oath.verifiabilityTier ?? "SELF_REPORTED") === "WITNESSED";
+
   return (
     <div
       style={{
@@ -47,6 +49,32 @@ export default function SettlePreview({
               oath.breachReason ? ` on ${oath.breachReason}` : ""
             }. Distribution favors the Client and Doubters.`}
       </p>
+      <div
+        className="mb-5"
+        style={{
+          background: "var(--cream-deep)",
+          border: "1px solid var(--bone-200)",
+          borderRadius: 8,
+          padding: "0.75rem 0.85rem",
+        }}
+      >
+        <p
+          className="font-mono mb-1"
+          style={{
+            fontSize: "0.6rem",
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            color: witnessed ? "var(--sage-deep)" : "var(--bone-600)",
+          }}
+        >
+          {witnessed ? "Final anchor: BalanceManager balance()" : "Final anchor: reported oath fields"}
+        </p>
+        <p style={{ fontSize: "0.78rem", lineHeight: 1.5, color: "var(--bone-800)" }}>
+          {witnessed
+            ? "WITNESSED settlement must read the DeepBook BalanceManager one last time before distribution, so drawdown survival resolves from chain state instead of operator input."
+            : "SELF_REPORTED settlement distributes from the oath fields already submitted by the bound exec wallet; reconciler disputes are evidence, not a settle-time gate."}
+        </p>
+      </div>
 
       {/* 2 + 3. Money flow + conservation */}
       <FlowDiagram

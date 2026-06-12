@@ -503,9 +503,9 @@ export default function MintPage() {
               })}
             </div>
             <p className="font-mono mb-4" style={{ fontSize: "0.6rem", color: "var(--bone-600)" }}>
-              Testnet binds via the pass-through path (venue=1) for both venues — no real exec
-              signature required. Real ed25519 DeepBook binding + on-chain fill reconciliation
-              (the trustless attestation path) is the roadmap.
+              Browser mint currently creates SELF_REPORTED oaths. WITNESSED DeepBook oaths
+              are the capture-at-execution path: fills route through the contract, and final
+              settlement needs the bound BalanceManager anchor.
             </p>
 
             <FieldLabel>Allowed assets</FieldLabel>
@@ -805,12 +805,6 @@ export default function MintPage() {
       )}
     </div>
   );
-}
-
-// ─── Screen-local helpers ────────────────────────────────────────
-
-function minStepIsDone(mintStep: number) {
-  return mintStep >= MINT_STEPS.length - 1;
 }
 
 function Section({

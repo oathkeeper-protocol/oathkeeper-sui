@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useSuiClient } from "@mysten/dapp-kit";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAttestations } from "@/lib/chain";
@@ -11,6 +12,18 @@ import AttestationFeed from "@/components/AttestationFeed";
  */
 export default function LiveAttestations({ oathId }: { oathId: string }) {
   const client = useSuiClient();
+  const [now, setNow] = useState<number | null>(null);
+
+  useEffect(() => {
+    const update = () => setNow(Date.now());
+    const first = window.setTimeout(update, 0);
+    const id = window.setInterval(update, 15_000);
+    return () => {
+      window.clearTimeout(first);
+      window.clearInterval(id);
+    };
+  }, []);
+
   const { data, isLoading } = useQuery({
     queryKey: ["attestations", oathId],
     queryFn: () => fetchAttestations(client, oathId),
@@ -32,5 +45,5 @@ export default function LiveAttestations({ oathId }: { oathId: string }) {
       </p>
     );
   }
-  return <AttestationFeed rows={rows} now={Date.now()} />;
+  return <AttestationFeed rows={rows} now={now ?? 0} />;
 }

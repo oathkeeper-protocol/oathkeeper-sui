@@ -141,6 +141,8 @@ export interface Oath {
   disputeCount?: number;
   /** Verifiability tier: WITNESSED (DeepBook capture-at-execution) vs SELF_REPORTED. */
   verifiabilityTier?: "WITNESSED" | "SELF_REPORTED";
+  /** DeepBook BalanceManager object used for final WITNESSED settlement anchor, once deployed/wired. */
+  balanceManagerId?: string;
 }
 
 // ─── Time helpers for stable relative timestamps ────────────────────────────

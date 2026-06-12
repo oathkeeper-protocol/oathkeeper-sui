@@ -16,6 +16,7 @@ import RoleBadge from "@/components/RoleBadge";
 import StakePanel from "@/components/StakePanel";
 import SettlePreview from "@/components/SettlePreview";
 import AttestPanel from "@/components/AttestPanel";
+import TierBadge from "@/components/TierBadge";
 import LiveAttestations from "./LiveAttestations";
 import LiveSentiment from "./LiveSentiment";
 import DetailActionBar from "./DetailActionBar";
@@ -34,11 +35,6 @@ function walrusBlobFor(oathId: string): string {
     .padStart(6, "0")
     .slice(-4);
   return `0x${seed.padStart(4, "0").slice(-4)}...${hash}`;
-}
-
-/** Equity floor implied by the drawdown dimension, in USDC terms. */
-function drawdownFloor(oath: Oath): number {
-  return oath.startingEquity * (1 - oath.dims.maxDrawdownBps / 10_000);
 }
 
 /** Current drawdown from start, in basis points (>= 0 when below start). */
@@ -459,40 +455,69 @@ export default function LiveOathView({
               </span>
             )}
           </div>
-          {(() => {
-            const witnessed = (o.verifiabilityTier ?? "SELF_REPORTED") === "WITNESSED";
-            return (
-              <div
-                className="inline-flex items-center gap-2 mb-3 font-mono"
-                style={{
-                  fontSize: "0.62rem",
-                  fontWeight: 600,
-                  letterSpacing: "0.04em",
-                  color: witnessed ? "var(--sage-deep)" : "var(--bone-600)",
-                  background: witnessed ? "var(--cream-deep)" : "transparent",
-                  border: `1px solid ${witnessed ? "var(--sage-deep)" : "var(--bone-200)"}`,
-                  borderRadius: 6,
-                  padding: "0.25rem 0.5rem",
-                }}
-                title={
-                  witnessed
-                    ? "DeepBook capture-at-execution: dimensions derived from on-chain fills + balance(). Drawdown-survival is trustless; other dims are witnessed (not wash-proof)."
-                    : "Operator self-reports fills via record_trade. The reconciler can flag fabrications (DISPUTABLE), but settlement trusts the inputs."
-                }
-              >
-                {witnessed ? "WITNESSED · DeepBook" : "SELF-REPORTED · disputable"}
-              </div>
-            );
-          })()}
+          <div className="mb-3">
+            <TierBadge tier={o.verifiabilityTier} />
+          </div>
           <p
             className="leading-relaxed mb-3"
             style={{ fontSize: "0.82rem", color: "var(--bone-800)" }}
           >
-            Settlement enforces the dimensions on-chain. An open-source, deterministic
-            reconciler independently diffs the operator&rsquo;s attestations against the
-            venue&rsquo;s own fill record — a fabricated fill is provable by anyone, who can
-            then file <span className="font-mono">dispute_attestation</span> on-chain.
+            Settlement enforces the dimensions on-chain, but the tier tells you where
+            the inputs came from. WITNESSED DeepBook oaths route fills through the
+            contract and use BalanceManager <span className="font-mono">balance()</span>{" "}
+            reads for the equity anchor; SELF_REPORTED oaths trust the operator&rsquo;s
+            submitted trade fields.
           </p>
+          <div className="grid sm:grid-cols-3 gap-2 mb-3">
+            {[
+              {
+                k: "Drawdown",
+                v:
+                  (o.verifiabilityTier ?? "SELF_REPORTED") === "WITNESSED"
+                    ? "Trustless survival check from BalanceManager anchors."
+                    : "Settles from reported equity updates.",
+              },
+              {
+                k: "Trades / volume",
+                v:
+                  (o.verifiabilityTier ?? "SELF_REPORTED") === "WITNESSED"
+                    ? "Routed fills are witnessed; wash-trading is still disclosed."
+                    : "Reported fills; reconciler can flag mismatch.",
+              },
+              {
+                k: "Final settle",
+                v:
+                  (o.verifiabilityTier ?? "SELF_REPORTED") === "WITNESSED"
+                    ? "Requires the final BalanceManager object anchor."
+                    : "Uses the standard permissionless settle path.",
+              },
+            ].map((item) => (
+              <div
+                key={item.k}
+                style={{
+                  background: "var(--cream-deep)",
+                  border: "1px solid var(--bone-200)",
+                  borderRadius: 8,
+                  padding: "0.65rem 0.7rem",
+                }}
+              >
+                <p
+                  className="font-mono mb-1"
+                  style={{
+                    fontSize: "0.58rem",
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    color: "var(--bone-600)",
+                  }}
+                >
+                  {item.k}
+                </p>
+                <p style={{ fontSize: "0.74rem", lineHeight: 1.4, color: "var(--bone-800)" }}>
+                  {item.v}
+                </p>
+              </div>
+            ))}
+          </div>
           <div
             className="font-mono"
             style={{
@@ -510,9 +535,10 @@ export default function LiveOathView({
             className="font-mono mt-2"
             style={{ fontSize: "0.6rem", color: "var(--bone-600)", lineHeight: 1.5 }}
           >
-            Trustless for on-chain venues (DeepBook — the chain is the oracle). Off-chain
-            venues (Hyperliquid, uptime) resolve via Nautilus / zkTLS attestation — roadmap.
-            Auto-slash on a proven dispute is the bonded-optimistic layer.
+            Reconciliation is deterministic and non-gating: anyone can compare routed or
+            reported fills to venue history and file{" "}
+            <span className="font-mono">dispute_attestation</span>. The trustless headline
+            is WITNESSED drawdown survival, not a prediction-market oracle.
           </p>
         </section>
       </div>

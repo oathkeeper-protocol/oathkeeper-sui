@@ -20,6 +20,10 @@ const BREACH: BreachReason[] = ["Drawdown", "MinTrades", "MinPnl", "MinVolume"];
 const ascii = (a: number[]) => new TextDecoder().decode(Uint8Array.from(a));
 const alias = (addr: string) => "OP-" + addr.slice(2, 6).toUpperCase();
 
+type MoveFields = Record<string, unknown>;
+type NestedMoveFields = { fields: MoveFields };
+type MoveObjectId = { id: string };
+
 function prose(dims: Oath["dims"], assets: string[]): string {
   const dd = (dims.maxDrawdownBps / 100).toFixed(0);
   const parts = [`Holds drawdown at or under ${dd}%`, `at least ${dims.minTrades} trades`];
@@ -29,23 +33,25 @@ function prose(dims: Oath["dims"], assets: string[]): string {
 
 /** Map a getObject(showContent) result to the Oath view-model. Returns null if not an Oath. */
 export function mapOath(content: unknown): Oath | null {
-  const c = content as { dataType?: string; type?: string; fields?: Record<string, unknown> };
+  const c = content as { dataType?: string; type?: string; fields?: MoveFields };
   if (!c || c.dataType !== "moveObject" || !String(c.type).includes("::oath::Oath<")) return null;
-  const f = c.fields as Record<string, any>;
-  const assets = (f.scope.fields.allowed_assets as number[][]).map(ascii);
+  const f = c.fields as MoveFields;
+  const scope = f.scope as NestedMoveFields;
+  const dimsFields = (f.dims as NestedMoveFields).fields;
+  const assets = (scope.fields.allowed_assets as number[][]).map(ascii);
   const dims = {
-    maxDrawdownBps: Number(f.dims.fields.max_drawdown_bps),
-    minTrades: Number(f.dims.fields.min_trades),
-    minPnlBps: Number(f.dims.fields.min_pnl_bps),
-    minVolumeUsdc: Number(f.dims.fields.min_volume_usdc),
+    maxDrawdownBps: Number(dimsFields.max_drawdown_bps),
+    minTrades: Number(dimsFields.min_trades),
+    minPnlBps: Number(dimsFields.min_pnl_bps),
+    minVolumeUsdc: Number(dimsFields.min_volume_usdc),
   };
-  const oathId = f.id.id as string;
+  const oathId = (f.id as MoveObjectId).id;
   return {
     oathId,
-    promiser: f.promiser,
-    promiserAlias: alias(f.promiser),
-    client: f.client,
-    oathType: f.oath_type.variant as OathTypeVariant,
+    promiser: f.promiser as string,
+    promiserAlias: alias(f.promiser as string),
+    client: f.client as string,
+    oathType: (f.oath_type as { variant: string }).variant as OathTypeVariant,
     bondAmount: Number(f.bond),
     clientClaim: Number(f.client_claim),
     clientClaimText: prose(dims, assets),
@@ -64,12 +70,14 @@ export function mapOath(content: unknown): Oath | null {
     attestations: [],
     onchain: true,
     explorerUrl: explorerObject(oathId),
-    execAddr: f.scope?.fields?.exec_addr as string | undefined,
+    execAddr: scope.fields.exec_addr as string | undefined,
     // Dispute fields exist only on the hardened package; default safely on older objects.
     disputed: Boolean(f.disputed),
     disputeCount: Number(f.dispute_count ?? 0),
     // verifiability_tier exists only on the witnessed-tier package; default SELF_REPORTED (0).
     verifiabilityTier: Number(f.verifiability_tier ?? 0) === 1 ? "WITNESSED" : "SELF_REPORTED",
+    // Optional until the witnessed package exposes the bound BalanceManager id in snapshots.
+    balanceManagerId: f.balance_manager_id as string | undefined,
   };
 }
 
@@ -190,10 +198,11 @@ export async function fetchOwnedPositions(client: SuiClient, owner: string): Pro
         options: { showContent: true }, cursor: cursor ?? undefined, limit: 50,
       });
       for (const o of page.data) {
-        const f = (o.data as { content?: { fields?: Record<string, any> } })?.content?.fields;
+        const f = (o.data as { content?: { fields?: MoveFields } })?.content?.fields;
         if (!f) continue;
+        const id = f.id as MoveObjectId;
         out.push({
-          positionId: f.id.id, side, oathId: f.oath_id,
+          positionId: id.id, side, oathId: f.oath_id as string,
           stakeAmount: Number(f.stake_amount), claimed: Boolean(f.claimed),
         });
       }
