@@ -253,14 +253,14 @@ export default function Home() {
                   }}
                 >
                   Holds drawdown to{" "}
-                  <span style={{ color: "var(--gold-deep)", fontStyle: "normal", fontWeight: 700 }}>
+                  <span style={{ color: "var(--gold-deep)", fontStyle: "normal", fontWeight: 700, whiteSpace: "nowrap" }}>
                     &le;20%
                   </span>{" "}
                   across at least{" "}
-                  <span style={{ color: "var(--gold-deep)", fontStyle: "normal", fontWeight: 700 }}>
-                    10
+                  <span style={{ color: "var(--gold-deep)", fontStyle: "normal", fontWeight: 700, whiteSpace: "nowrap" }}>
+                    10 trades
                   </span>{" "}
-                  trades, this epoch.
+                  this epoch.
                 </p>
 
                 {/* 6. Sentiment bar */}
@@ -298,7 +298,7 @@ export default function Home() {
                     Settles in{" "}
                     <span style={{ color: "var(--gold-deep)", fontWeight: 600 }}>02:14:00</span>
                   </span>
-                  <span style={{ color: "var(--bone-600)" }}>Sealed &middot; Walrus</span>
+                  <span style={{ color: "var(--bone-600)" }}>Text ref committed</span>
                 </div>
 
                 {/* 8. CTA */}
@@ -323,7 +323,7 @@ export default function Home() {
               className="font-mono mt-4"
               style={{ fontSize: "0.7rem", color: "var(--bone-600)", lineHeight: 1.5 }}
             >
-              Saw an anon claim a 47% win rate? Put capital behind your doubt, or back the operator.
+              Saw an anon Oathkeeper claim a durable edge? Stake with Doubters, or back the operator.
             </p>
           </div>
         </div>
@@ -433,29 +433,36 @@ export default function Home() {
                     </span>
                     <div>
                       <div
-                        className="font-semibold mb-1"
+                        className="font-semibold mb-1 flex flex-wrap items-center gap-x-3 gap-y-1"
                         style={{
                           fontSize: answer ? "1.1rem" : "0.95rem",
                           color: answer ? "var(--bone-950)" : "var(--bone-800)",
                         }}
                       >
-                        {label}
+                        <span>{label}</span>
                         {!answer && (
                           <span
-                            className="ml-3 font-mono text-xs"
-                            style={{ color: "var(--bone-600)" }}
+                            className="font-mono text-xs"
+                            style={{
+                              color: "var(--bone-600)",
+                              border: "1px solid var(--bone-200)",
+                              borderRadius: 3,
+                              padding: "1px 6px",
+                              whiteSpace: "nowrap",
+                            }}
                           >
                             fails
                           </span>
                         )}
                         {answer && (
                           <span
-                            className="ml-3 font-mono text-xs"
+                            className="font-mono text-xs"
                             style={{
                               color: "var(--gold-ink)",
                               background: "var(--gold-dim)",
                               padding: "1px 7px",
                               borderRadius: 3,
+                              whiteSpace: "nowrap",
                             }}
                           >
                             the answer
@@ -525,7 +532,7 @@ export default function Home() {
                   step: 1,
                   role: "Operator",
                   action: "Bonds capital",
-                  desc: "Posts USDC bond against a multi-dimensional SLA. Wallet signature binds the execution address.",
+                  desc: "Posts USDC Bond against a multi-dimensional Oath. Wallet signature binds the execution address.",
                   active: true,
                 },
                 {
@@ -546,14 +553,14 @@ export default function Home() {
                   step: 4,
                   role: "Indexer",
                   action: "Tracks performance",
-                  desc: "Open-source reconciliation indexer diffs attestations against venue history.",
+                  desc: "Open-source reconciliation indexer flags mismatches between attestations and venue history.",
                   active: false,
                 },
                 {
                   step: 5,
                   role: "Protocol",
                   action: "Settles automatically",
-                  desc: "On epoch end or breach, settlement executes on-chain. No arbitration.",
+                  desc: "On epoch end or breach, settlement executes on-chain from the recorded Oath state.",
                   active: false,
                 },
               ] as const).map(({ step, role, action, desc, active }) => (
@@ -788,26 +795,26 @@ export default function Home() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {([
-              {
-                status: "LIVE",
-                name: "AI Trading",
-                type: "TradingOath",
-                hidden: "Strategy, model weights, position sizing",
-                bonded: "Max drawdown / min trades / min PnL",
-                detail:
-                  "DeepBook + Hyperliquid execution. Per-trade attestations stored on Walrus. Reconciliation indexer verifies fills open-source.",
-                active: true,
-              },
-              {
-                status: "LIVE",
-                name: "RPC Uptime",
-                type: "UptimeOath",
-                hidden: "Infrastructure topology, failover logic",
-                bonded: "Uptime percentage over epoch",
-                detail:
-                  "Open-source HTTPS prober attests availability. On-chain record. Client gets claim on bond if SLA breaks.",
-                active: true,
-              },
+                {
+                  status: "TESTNET",
+                  name: "AI Trading",
+                  type: "TradingOath",
+                  hidden: "Strategy, model weights, position sizing",
+                  bonded: "Max drawdown / min trades / min PnL",
+                  detail:
+                  "Current proof separates WITNESSED DeepBook drawdown anchors from SELF_REPORTED fills. Hyperliquid and encrypted Walrus blobs are roadmap plumbing, not the headline.",
+                  active: true,
+                },
+                {
+                  status: "ROADMAP",
+                  name: "RPC Uptime",
+                  type: "UptimeOath",
+                  hidden: "Infrastructure topology, failover logic",
+                  bonded: "Uptime percentage over epoch",
+                  detail:
+                  "Enum shape exists, but the live adapter is not part of this testnet proof. The submission proof stays focused on the DeFi & Payments Oath.",
+                  active: false,
+                },
               {
                 status: "MOCK",
                 name: "AI Behavior",
@@ -957,17 +964,17 @@ export default function Home() {
               {
                 tech: "Walrus",
                 role: "Storage",
-                desc: "Sealed oath text and per-trade attestation blobs stored on-chain. Merkle root in the oath object.",
+                desc: "Current UI commits an opaque oath-text reference. Encrypted Walrus blobs remain the storage path to wire before claiming live blob reads.",
               },
               {
                 tech: "Seal",
                 role: "Access control",
-                desc: "Authorized runtime decrypts sealed oath contents only when settlement conditions allow. Not TEE.",
+                desc: "Planned access-control layer for private oath text. Not a TEE claim, and not required for the current settlement proof.",
               },
               {
                 tech: "DeepBook",
                 role: "Execution",
-                desc: "Native Sui execution venue. Fills are attested on-chain and reconciled by the open-source indexer.",
+                desc: "WITNESSED path uses DeepBook spot plus BalanceManager anchors so drawdown survival resolves from chain state, not operator input.",
               },
             ] as const).map(({ tech, role, desc }) => (
               <div key={tech} className="flex gap-5 items-start">
