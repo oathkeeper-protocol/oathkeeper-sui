@@ -76,6 +76,19 @@ function signerFromEnv(key: string): Ed25519Keypair {
   return keypairFromBech32(requiredEnv(key));
 }
 
+function assertFullPrereqs() {
+  assertObjectId('OATHKEEPER_PACKAGE_ID', env.packageId);
+  assertObjectId('OATHKEEPER_REGISTRY_ID', env.registryId);
+  assertObjectId('DEEPBOOK_BALANCE_MANAGER_ID', env.deepbookBalanceManagerId);
+  assertObjectId('DEEPBOOK_TRADE_CAP_ID', env.deepbookTradeCapId);
+  assertObjectId('DEEPBOOK_DEPOSIT_CAP_ID', env.deepbookDepositCapId);
+  assertObjectId('DEEPBOOK_WITHDRAW_CAP_ID', env.deepbookWithdrawCapId);
+  assertObjectId('SUI_DBUSDC_POOL_ID', env.suiDbusdcPoolId);
+  requiredEnv('OATHKEEPER_PROMISER_KEY');
+  requiredEnv('OATHKEEPER_EXEC_KEY');
+  requiredEnv('OATHKEEPER_DEPLOYER_KEY');
+}
+
 type TxResponse = Awaited<ReturnType<ReturnType<typeof makeClient>['signAndExecuteTransaction']>>;
 
 async function run(signer: Ed25519Keypair, tx: Transaction, label: string): Promise<TxResponse> {
@@ -116,20 +129,12 @@ async function bootstrapManager(exec: Ed25519Keypair) {
   log.info(ids, 'set these env vars for LIVE_WITNESSED_MODE=full');
 }
 
-async function fullRun(oathkeeper: Ed25519Keypair, exec: Ed25519Keypair) {
-  assertObjectId('OATHKEEPER_PACKAGE_ID', env.packageId);
-  assertObjectId('OATHKEEPER_REGISTRY_ID', env.registryId);
-  assertObjectId('DEEPBOOK_BALANCE_MANAGER_ID', env.deepbookBalanceManagerId);
-  assertObjectId('DEEPBOOK_TRADE_CAP_ID', env.deepbookTradeCapId);
-  assertObjectId('DEEPBOOK_DEPOSIT_CAP_ID', env.deepbookDepositCapId);
-  assertObjectId('DEEPBOOK_WITHDRAW_CAP_ID', env.deepbookWithdrawCapId);
-  assertObjectId('SUI_DBUSDC_POOL_ID', env.suiDbusdcPoolId);
-
+async function fullRun(oathkeeper: Ed25519Keypair, exec: Ed25519Keypair, deployer: Ed25519Keypair) {
   const now = BigInt(Date.now());
   const bindingNonce = BigInt(process.env.LIVE_WITNESSED_BINDING_NONCE ?? now.toString());
   const validFromMs = BigInt(process.env.LIVE_WITNESSED_VALID_FROM_MS ?? '0');
   const validUntilMs = BigInt(process.env.LIVE_WITNESSED_VALID_UNTIL_MS ?? (now + 3_600_000n).toString());
-  const client = process.env.LIVE_WITNESSED_CLIENT_ADDRESS ?? deployerKeypair().toSuiAddress();
+  const client = process.env.LIVE_WITNESSED_CLIENT_ADDRESS ?? deployer.toSuiAddress();
   const allowedAssets = (process.env.LIVE_WITNESSED_ALLOWED_ASSETS ?? 'SUI,DBUSDC').split(',').map((s) => s.trim()).filter(Boolean);
   const binding = await signWitnessedBinding(exec, {
     execAddr: exec.toSuiAddress(),
@@ -182,19 +187,24 @@ async function fullRun(oathkeeper: Ed25519Keypair, exec: Ed25519Keypair) {
     log.info({ waitMs }, 'waiting for epoch end before witnessed settle');
     await new Promise((resolve) => setTimeout(resolve, waitMs));
   }
-  const settleRes = await run(deployerKeypair(), buildSettleWitnessedPtb(oathId, env.dbusdcType), 'settle-witnessed');
+  const settleRes = await run(deployer, buildSettleWitnessedPtb(oathId, env.dbusdcType), 'settle-witnessed');
   log.info({ oathId, settled: eventData(settleRes, '::oath::OathSettled') }, 'live witnessed path complete');
 }
 
 async function main() {
   checkSuiCli();
-  const exec = signerFromEnv('OATHKEEPER_EXEC_KEY');
   if (mode === 'bootstrap-manager') {
+    const exec = signerFromEnv('OATHKEEPER_EXEC_KEY');
     await bootstrapManager(exec);
     return;
   }
   if (mode !== 'full') throw new Error(`Unknown LIVE_WITNESSED_MODE: ${mode}`);
-  await fullRun(signerFromEnv('OATHKEEPER_PROMISER_KEY'), exec);
+  assertFullPrereqs();
+  await fullRun(
+    signerFromEnv('OATHKEEPER_PROMISER_KEY'),
+    signerFromEnv('OATHKEEPER_EXEC_KEY'),
+    signerFromEnv('OATHKEEPER_DEPLOYER_KEY'),
+  );
 }
 
 main().catch((e) => {
