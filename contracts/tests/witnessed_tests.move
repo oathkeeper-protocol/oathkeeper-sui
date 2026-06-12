@@ -4,7 +4,7 @@ module oathkeeper::witnessed_tests;
 use sui::clock;
 use sui::test_scenario::{Self, Scenario};
 use oathkeeper::oath::{Self, Oath};
-use oathkeeper::registry::{Self, Registry};
+use oathkeeper::oath_registry::{Self, Registry};
 use oathkeeper::attestation;
 use oathkeeper::test_utils::{Self, USDC};
 
@@ -14,7 +14,7 @@ use oathkeeper::test_utils::{Self, USDC};
 // witnessed::trade_via_deepbook entry (U4) enforces venue=DeepBook.
 fun mint_witnessed_oath(starting_equity: u64): Scenario {
     let mut scenario = test_scenario::begin(test_utils::deployer());
-    registry::init_for_testing(test_scenario::ctx(&mut scenario));
+    oath_registry::init_for_testing(test_scenario::ctx(&mut scenario));
 
     test_scenario::next_tx(&mut scenario, test_utils::promiser());
     let mut registry = test_scenario::take_shared<Registry>(&scenario);
@@ -49,13 +49,15 @@ fun apply_witnessed_fills(scenario: &mut Scenario, equity_each: u64, notional_ea
     test_scenario::return_shared(oath);
 }
 
-fun settle(scenario: &mut Scenario) {
+fun settle(scenario: &mut Scenario, final_equity: u64) {
     test_scenario::next_tx(scenario, test_utils::deployer());
     let mut registry = test_scenario::take_shared<Registry>(scenario);
     let mut oath = test_scenario::take_shared<Oath<USDC>>(scenario);
     let mut clock = clock::create_for_testing(test_scenario::ctx(scenario));
     clock::set_for_testing(&mut clock, 2_000_000);
-    oath::settle_epoch<USDC>(&mut oath, &mut registry, &clock, test_scenario::ctx(scenario));
+    oath::settle_epoch_witnessed_with_anchor<USDC>(
+        &mut oath, &mut registry, final_equity, &clock, test_scenario::ctx(scenario),
+    );
     clock::destroy_for_testing(clock);
     test_scenario::return_shared(oath);
     test_scenario::return_shared(registry);
@@ -78,7 +80,7 @@ fun witnessed_mint_sets_tier_and_chain_anchor() {
 fun self_reported_mint_defaults_to_self_reported_tier() {
     // Sanity: the unchanged self-reported path still produces SELF_REPORTED oaths.
     let mut scenario = test_scenario::begin(test_utils::deployer());
-    registry::init_for_testing(test_scenario::ctx(&mut scenario));
+    oath_registry::init_for_testing(test_scenario::ctx(&mut scenario));
     test_scenario::next_tx(&mut scenario, test_utils::promiser());
     let mut registry = test_scenario::take_shared<Registry>(&scenario);
     let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
@@ -119,7 +121,7 @@ fun witnessed_kept_all_dims_pass() {
     // 10 witnessed fills bring equity to 110_000 (> pnl floor 100_500), volume 10_000 — all dims hold.
     let mut scenario = mint_witnessed_oath(100_000);
     apply_witnessed_fills(&mut scenario, 110_000, 1_000, 10);
-    settle(&mut scenario);
+    settle(&mut scenario, 110_000);
     test_scenario::next_tx(&mut scenario, test_utils::promiser());
     let oath = test_scenario::take_shared<Oath<USDC>>(&scenario);
     assert!(oath::status(&oath) == oath::status_settled());
@@ -136,7 +138,7 @@ fun witnessed_broken_on_drawdown_low_water_mark() {
     apply_witnessed_fills(&mut scenario, 110_000, 1_000, 5);
     apply_witnessed_fills(&mut scenario, 75_000, 1_000, 1);  // dip below floor
     apply_witnessed_fills(&mut scenario, 110_000, 1_000, 4);  // recover
-    settle(&mut scenario);
+    settle(&mut scenario, 110_000);
     test_scenario::next_tx(&mut scenario, test_utils::promiser());
     let oath = test_scenario::take_shared<Oath<USDC>>(&scenario);
     assert!(oath::status(&oath) == oath::status_settled());
@@ -146,15 +148,47 @@ fun witnessed_broken_on_drawdown_low_water_mark() {
 }
 
 #[test]
+#[expected_failure(abort_code = oathkeeper::oath::ESettlementTierMismatch)]
+fun witnessed_oath_rejects_self_reported_settle_path() {
+    let mut scenario = mint_witnessed_oath(100_000);
+    apply_witnessed_fills(&mut scenario, 110_000, 1_000, 10);
+    test_scenario::next_tx(&mut scenario, test_utils::deployer());
+    let mut registry = test_scenario::take_shared<Registry>(&scenario);
+    let mut oath = test_scenario::take_shared<Oath<USDC>>(&scenario);
+    let mut clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
+    clock::set_for_testing(&mut clock, 2_000_000);
+    oath::settle_epoch<USDC>(&mut oath, &mut registry, &clock, test_scenario::ctx(&mut scenario));
+    clock::destroy_for_testing(clock);
+    test_scenario::return_shared(oath);
+    test_scenario::return_shared(registry);
+    test_scenario::end(scenario);
+}
+
+#[test]
 fun witnessed_dead_operator_breaks_on_min_trades() {
     // Zero witnessed fills: trade_count 0 < min_trades 10. No entry can inject a fake count,
     // so a dead operator who self-reports nothing on-chain settles BROKEN.
     let mut scenario = mint_witnessed_oath(100_000);
-    settle(&mut scenario);
+    settle(&mut scenario, 100_000);
     test_scenario::next_tx(&mut scenario, test_utils::promiser());
     let oath = test_scenario::take_shared<Oath<USDC>>(&scenario);
     assert!(oath::status(&oath) == oath::status_settled());
     assert!(oath::breach_reason(&oath).is_some()); // Broken (min_trades)
+    test_scenario::return_shared(oath);
+    test_scenario::end(scenario);
+}
+
+#[test]
+fun witnessed_final_anchor_dip_breaks_on_drawdown() {
+    // The WITNESSED settlement path refreshes final equity from chain state. If the
+    // BalanceManager ends below the drawdown floor, the oath breaks even after enough fills.
+    let mut scenario = mint_witnessed_oath(100_000);
+    apply_witnessed_fills(&mut scenario, 110_000, 1_000, 10);
+    settle(&mut scenario, 75_000);
+    test_scenario::next_tx(&mut scenario, test_utils::promiser());
+    let oath = test_scenario::take_shared<Oath<USDC>>(&scenario);
+    assert!(oath::status(&oath) == oath::status_settled());
+    assert!(oath::breach_reason(&oath).is_some()); // Broken (drawdown via final anchor)
     test_scenario::return_shared(oath);
     test_scenario::end(scenario);
 }

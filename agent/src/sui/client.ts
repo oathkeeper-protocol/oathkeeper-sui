@@ -17,6 +17,17 @@ export const env = {
   registryId: process.env.OATHKEEPER_REGISTRY_ID ?? '0x0',
   usdcTreasuryId: process.env.OATHKEEPER_USDC_TREASURY_ID ?? '0x0',
   deployerKey: process.env.OATHKEEPER_DEPLOYER_KEY ?? '',
+  deepbookPackageId: process.env.DEEPBOOK_PACKAGE_ID ?? '0x22be4cade64bf2d02412c7e8d0e8beea2f78828b948118d46735315409371a3c',
+  deepbookRegistryId: process.env.DEEPBOOK_REGISTRY_ID ?? '0x7c256edbda983a2cd6f946655f4bf3f00a41043993781f8674a7046e8c0e11d1',
+  deepTreasuryId: process.env.DEEP_TREASURY_ID ?? '0x69fffdae0075f8f71f4fa793549c11079266910e8905169845af1f5d00e09dcb',
+  deepType: process.env.DEEP_TYPE ?? '0x36dbef866a1d62bf7328989a10fb2f07d769f4ee587c0de4a0a256e57e0a58a8::deep::DEEP',
+  dbusdcType: process.env.DBUSDC_TYPE ?? '0xf7152c05930480cd740d7311b5b8b45c6f488e3a53a11c3f74a6fac36a52e0d7::DBUSDC::DBUSDC',
+  deepSuiPoolId: process.env.DEEP_SUI_POOL_ID ?? '0x48c95963e9eac37a316b7ae04a0deb761bcdcc2b67912374d6036e7f0e9bae9f',
+  suiDbusdcPoolId: process.env.SUI_DBUSDC_POOL_ID ?? '0x1c19362ca52b8ffd7a33cee805a67d40f31e6ba303753fd3a4cfdfacea7163a5',
+  deepbookBalanceManagerId: process.env.DEEPBOOK_BALANCE_MANAGER_ID ?? '0x0',
+  deepbookTradeCapId: process.env.DEEPBOOK_TRADE_CAP_ID ?? '0x0',
+  deepbookDepositCapId: process.env.DEEPBOOK_DEPOSIT_CAP_ID ?? '0x0',
+  deepbookWithdrawCapId: process.env.DEEPBOOK_WITHDRAW_CAP_ID ?? '0x0',
 };
 
 /** Fully-qualified mock-USDC coin type, used as the generic `T` everywhere. */

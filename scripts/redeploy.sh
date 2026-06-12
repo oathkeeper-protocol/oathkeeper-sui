@@ -24,7 +24,7 @@ const pkg = (r.objectChanges||[]).find(o=>o.type==="published");
 let reg="", cap="";
 for (const o of (r.objectChanges||[])) if (o.type==="created") {
   const t=o.objectType||"";
-  if (t.includes("::registry::Registry")) reg=o.objectId;
+  if (t.includes("::oath_registry::Registry")) reg=o.objectId;
   if (t.includes("TreasuryCap") && t.includes("::usdc::USDC")) cap=o.objectId;
 }
 process.stdout.write([pkg?pkg.packageId:"", reg, cap].join(" "));

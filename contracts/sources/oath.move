@@ -14,7 +14,7 @@ use sui::balance::{Self, Balance};
 use sui::clock::{Self, Clock};
 use sui::coin::{Self, Coin};
 use sui::event;
-use oathkeeper::registry::{Self, Registry};
+use oathkeeper::oath_registry::{Self, Registry};
 use oathkeeper::economics;
 use oathkeeper::signature;
 
@@ -38,6 +38,7 @@ const EClientClaimExceedsBond: u64 = 16;
 const ESelfDealingRole: u64 = 17;       // promiser/client/exec must be distinct (anti self-breach-harvest)
 const EDrawdownBpsTooHigh: u64 = 18;     // max_drawdown_bps must be <= 10000
 const EMinPnlBpsTooHigh: u64 = 19;       // min_pnl_bps bounded to prevent settle overflow
+const ESettlementTierMismatch: u64 = 20; // WITNESSED settlement must refresh its final balance anchor first
 
 // === Dimension bounds ===
 const MAX_BPS: u64 = 10_000;
@@ -242,7 +243,7 @@ public fun start_epoch<T>(
         EUnsupportedOathType,
     );
 
-    let scope_hash = registry::compute_scope_hash(
+    let scope_hash = oath_registry::compute_scope_hash(
         scope.exec_addr, scope.venue, scope.allowed_assets,
         scope.epoch_duration_ms, dims.max_drawdown_bps, dims.min_trades,
         dims.min_pnl_bps, dims.min_volume_usdc, tag,
@@ -250,7 +251,7 @@ public fun start_epoch<T>(
 
     let promiser = promiser_addr;
     assert!(
-        !registry::has_scope(registry, promiser, scope_hash),
+        !oath_registry::has_scope(registry, promiser, scope_hash),
         EScopeAlreadyReservedEarlyCheck,
     );
 
@@ -351,8 +352,8 @@ public fun bind_exec_wallet<T>(
     };
 
     let oath_id = object::id(&oath);
-    registry::reserve_scope(registry, promiser, oath.scope_hash, oath_id);
-    registry::bind_exec(registry, oath.scope.exec_addr, oath_id);
+    oath_registry::reserve_scope(registry, promiser, oath.scope_hash, oath_id);
+    oath_registry::bind_exec(registry, oath.scope.exec_addr, oath_id);
 
     event::emit(OathMinted {
         oath_id, promiser, client, oath_type, bond_amount, client_claim, epoch_end_ms,
@@ -401,6 +402,31 @@ public entry fun settle_epoch<T>(
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
+    assert!(oath.verifiability_tier == TIER_SELF_REPORTED, ESettlementTierMismatch);
+    settle_epoch_internal(oath, registry, clock, ctx);
+}
+
+/// WITNESSED settlement entry point after the caller has read a final on-chain equity anchor.
+/// This preserves the original settlement economics while preventing callers from bypassing the
+/// final BalanceManager read by using the SELF_REPORTED settle path.
+public(package) fun settle_epoch_witnessed_with_anchor<T>(
+    oath: &mut Oath<T>,
+    registry: &mut Registry,
+    final_equity_usdc: u64,
+    clock: &Clock,
+    ctx: &mut TxContext,
+) {
+    assert!(oath.verifiability_tier == TIER_WITNESSED, ESettlementTierMismatch);
+    record_equity_anchor(oath, final_equity_usdc);
+    settle_epoch_internal(oath, registry, clock, ctx);
+}
+
+fun settle_epoch_internal<T>(
+    oath: &mut Oath<T>,
+    registry: &mut Registry,
+    clock: &Clock,
+    ctx: &mut TxContext,
+) {
     assert!(oath.status != STATUS_SETTLED, EAlreadySettled);
     assert!(clock::timestamp_ms(clock) >= oath.epoch_end_ms, EEpochNotEnded);
 
@@ -430,7 +456,7 @@ public entry fun settle_epoch<T>(
         }
     };
 
-    let platform = registry::platform_treasury(registry);
+    let platform = oath_registry::platform_treasury(registry);
     let mut bond_to_promiser = 0u64;
     let mut bond_to_client = 0u64;
     let mut bond_residual_to_platform = 0u64;
@@ -533,8 +559,8 @@ public entry fun settle_epoch<T>(
         };
     };
 
-    registry::release_scope(registry, oath.promiser, oath.scope_hash);
-    registry::unbind_exec(registry, oath.scope.exec_addr);
+    oath_registry::release_scope(registry, oath.promiser, oath.scope_hash);
+    oath_registry::unbind_exec(registry, oath.scope.exec_addr);
 
     let loser_total_for_event = if (oath.status == STATUS_KEPT) {
         oath.total_doubter_stakes
@@ -621,10 +647,14 @@ public fun new_scope(
 public(package) fun record_equity_update<T>(
     oath: &mut Oath<T>, new_equity: u64, notional: u64,
 ) {
-    oath.current_equity_usdc = new_equity;
-    if (new_equity < oath.min_equity_usdc) { oath.min_equity_usdc = new_equity; };
+    record_equity_anchor(oath, new_equity);
     oath.cumulative_volume_usdc = oath.cumulative_volume_usdc + notional;
     oath.trade_count = oath.trade_count + 1;
+}
+
+public(package) fun record_equity_anchor<T>(oath: &mut Oath<T>, new_equity: u64) {
+    oath.current_equity_usdc = new_equity;
+    if (new_equity < oath.min_equity_usdc) { oath.min_equity_usdc = new_equity; };
 }
 
 public(package) fun add_believer_stake<T>(oath: &mut Oath<T>, stake: Balance<T>) {

@@ -4,13 +4,13 @@ module oathkeeper::attestation_tests;
 use sui::clock;
 use sui::test_scenario::{Self, Scenario};
 use oathkeeper::oath::{Self, Oath};
-use oathkeeper::registry::{Self, Registry};
+use oathkeeper::oath_registry::{Self, Registry};
 use oathkeeper::attestation;
 use oathkeeper::test_utils::{Self, USDC};
 
 fun mint_oath(): Scenario {
     let mut scenario = test_scenario::begin(test_utils::deployer());
-    registry::init_for_testing(test_scenario::ctx(&mut scenario));
+    oath_registry::init_for_testing(test_scenario::ctx(&mut scenario));
 
     test_scenario::next_tx(&mut scenario, test_utils::promiser());
     let mut registry = test_scenario::take_shared<Registry>(&scenario);

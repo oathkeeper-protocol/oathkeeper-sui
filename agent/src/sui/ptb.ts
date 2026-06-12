@@ -96,6 +96,89 @@ export function buildMintOathPtb(o: MintOpts): Transaction {
   return tx;
 }
 
+export interface WitnessedMintOpts extends Omit<MintOpts, 'startingEquityUsdc'> {
+  coinType: string;
+  balanceManagerId?: string;
+}
+
+export function buildMintWitnessedPtb(o: WitnessedMintOpts): Transaction {
+  const tx = new Transaction();
+  const oathType = tx.moveCall({ target: `${P()}::oath::trading_oath` });
+  const dims = tx.moveCall({
+    target: `${P()}::oath::new_dimensions`,
+    arguments: [
+      tx.pure.u64(o.maxDrawdownBps),
+      tx.pure.u64(o.minTrades),
+      tx.pure.u64(o.minPnlBps),
+      tx.pure.u64(o.minVolumeUsdc),
+    ],
+  });
+  const scope = tx.moveCall({
+    target: `${P()}::oath::new_scope`,
+    arguments: [
+      tx.pure.address(o.execAddr),
+      tx.pure.u8(o.venue),
+      allowedAssetsArg(tx, o.allowedAssets),
+      tx.pure.u64(o.epochDurationMs),
+    ],
+  });
+  tx.moveCall({
+    target: `${P()}::witnessed::mint_witnessed`,
+    typeArguments: [o.coinType],
+    arguments: [
+      tx.object(env.registryId),
+      oathType,
+      dims,
+      scope,
+      coinWithBalance({ type: o.coinType, balance: o.bond }),
+      tx.pure.address(o.client),
+      tx.pure.u64(o.clientClaim),
+      tx.pure.vector('u8', bytes(o.sealedRoot)),
+      tx.pure.u64(o.bindingNonce),
+      tx.object(o.balanceManagerId ?? env.deepbookBalanceManagerId),
+      tx.pure.vector('u8', o.execSignature),
+      tx.pure.vector('u8', o.execPubkey),
+      tx.pure.u64(o.validFromMs),
+      tx.pure.u64(o.validUntilMs),
+      tx.object(CLOCK_ID),
+    ],
+  });
+  return tx;
+}
+
+export interface WitnessedTradeOpts {
+  oathId: string;
+  baseType: string;
+  quoteType: string;
+  poolId: string;
+  balanceManagerId?: string;
+  tradeCapId?: string;
+  depositCapId?: string;
+  withdrawCapId?: string;
+  baseIn: bigint;
+  minQuoteOut: bigint;
+}
+
+export function buildTradeViaDeepBookPtb(o: WitnessedTradeOpts): Transaction {
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${P()}::witnessed::trade_via_deepbook`,
+    typeArguments: [o.baseType, o.quoteType],
+    arguments: [
+      tx.object(o.oathId),
+      tx.object(o.poolId),
+      tx.object(o.balanceManagerId ?? env.deepbookBalanceManagerId),
+      tx.object(o.tradeCapId ?? env.deepbookTradeCapId),
+      tx.object(o.depositCapId ?? env.deepbookDepositCapId),
+      tx.object(o.withdrawCapId ?? env.deepbookWithdrawCapId),
+      coinWithBalance({ type: o.baseType, balance: o.baseIn }),
+      tx.pure.u64(o.minQuoteOut),
+      tx.object(CLOCK_ID),
+    ],
+  });
+  return tx;
+}
+
 export function buildStakeForPtb(oathId: string, amount: bigint): Transaction {
   const tx = new Transaction();
   tx.moveCall({
@@ -154,6 +237,16 @@ export function buildSettlePtb(oathId: string): Transaction {
     target: `${P()}::oath::settle_epoch`,
     typeArguments: T(),
     arguments: [tx.object(oathId), tx.object(env.registryId), tx.object(CLOCK_ID)],
+  });
+  return tx;
+}
+
+export function buildSettleWitnessedPtb(oathId: string, coinType: string, balanceManagerId = env.deepbookBalanceManagerId): Transaction {
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${P()}::witnessed::settle_epoch_witnessed`,
+    typeArguments: [coinType],
+    arguments: [tx.object(oathId), tx.object(env.registryId), tx.object(balanceManagerId), tx.object(CLOCK_ID)],
   });
   return tx;
 }

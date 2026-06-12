@@ -3,7 +3,7 @@
 /// One shared `Registry` object owns two tables:
 ///   - `scope_table:  Table<ScopeKey, ID>`  enforces `(promiser, scope_hash)` uniqueness.
 ///   - `exec_table:   Table<address, ID>`   enforces single active oath per exec_addr.
-module oathkeeper::registry;
+module oathkeeper::oath_registry;
 
 use std::bcs;
 use sui::hash;

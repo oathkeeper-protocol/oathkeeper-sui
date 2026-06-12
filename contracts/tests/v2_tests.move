@@ -5,7 +5,7 @@ use sui::clock;
 use sui::coin;
 use sui::test_scenario::{Self, Scenario};
 use oathkeeper::oath::{Self, Oath};
-use oathkeeper::registry::{Self, Registry};
+use oathkeeper::oath_registry::{Self, Registry};
 use oathkeeper::believer::{Self, BelieverPosition};
 use oathkeeper::doubter::{Self, DoubterPosition};
 use oathkeeper::test_utils::{Self, USDC};
@@ -14,7 +14,7 @@ use oathkeeper::test_utils::{Self, USDC};
 
 fun mint_oath(client_claim: u64): Scenario {
     let mut scenario = test_scenario::begin(test_utils::deployer());
-    registry::init_for_testing(test_scenario::ctx(&mut scenario));
+    oath_registry::init_for_testing(test_scenario::ctx(&mut scenario));
 
     test_scenario::next_tx(&mut scenario, test_utils::promiser());
     let mut registry = test_scenario::take_shared<Registry>(&scenario);
@@ -77,7 +77,7 @@ fun mint_flow_happy_path() {
 #[expected_failure(abort_code = oathkeeper::oath::EMinTradesTooLow)]
 fun mint_aborts_min_trades_zero() {
     let mut scenario = test_scenario::begin(test_utils::deployer());
-    registry::init_for_testing(test_scenario::ctx(&mut scenario));
+    oath_registry::init_for_testing(test_scenario::ctx(&mut scenario));
     test_scenario::next_tx(&mut scenario, test_utils::promiser());
     let mut registry = test_scenario::take_shared<Registry>(&scenario);
     let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
@@ -99,7 +99,7 @@ fun mint_aborts_min_trades_zero() {
 #[expected_failure(abort_code = oathkeeper::oath::EClientClaimExceedsBond)]
 fun mint_aborts_claim_exceeds_bond() {
     let mut scenario = test_scenario::begin(test_utils::deployer());
-    registry::init_for_testing(test_scenario::ctx(&mut scenario));
+    oath_registry::init_for_testing(test_scenario::ctx(&mut scenario));
     test_scenario::next_tx(&mut scenario, test_utils::promiser());
     let mut registry = test_scenario::take_shared<Registry>(&scenario);
     let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
@@ -120,7 +120,7 @@ fun mint_aborts_claim_exceeds_bond() {
 #[expected_failure(abort_code = oathkeeper::oath::EUnsupportedOathType)]
 fun mint_aborts_validator_oath() {
     let mut scenario = test_scenario::begin(test_utils::deployer());
-    registry::init_for_testing(test_scenario::ctx(&mut scenario));
+    oath_registry::init_for_testing(test_scenario::ctx(&mut scenario));
     test_scenario::next_tx(&mut scenario, test_utils::promiser());
     let mut registry = test_scenario::take_shared<Registry>(&scenario);
     let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
@@ -606,7 +606,7 @@ fun believer_double_claim_aborts() {
 #[expected_failure(abort_code = oathkeeper::oath::ESelfDealingRole)]
 fun mint_aborts_when_client_equals_promiser() {
     let mut scenario = test_scenario::begin(test_utils::deployer());
-    registry::init_for_testing(test_scenario::ctx(&mut scenario));
+    oath_registry::init_for_testing(test_scenario::ctx(&mut scenario));
     test_scenario::next_tx(&mut scenario, test_utils::promiser());
     let mut registry = test_scenario::take_shared<Registry>(&scenario);
     let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
@@ -628,7 +628,7 @@ fun mint_aborts_when_client_equals_promiser() {
 #[expected_failure(abort_code = oathkeeper::oath::EDrawdownBpsTooHigh)]
 fun mint_aborts_drawdown_bps_too_high() {
     let mut scenario = test_scenario::begin(test_utils::deployer());
-    registry::init_for_testing(test_scenario::ctx(&mut scenario));
+    oath_registry::init_for_testing(test_scenario::ctx(&mut scenario));
     test_scenario::next_tx(&mut scenario, test_utils::promiser());
     let mut registry = test_scenario::take_shared<Registry>(&scenario);
     let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));

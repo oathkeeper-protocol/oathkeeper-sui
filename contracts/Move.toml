@@ -6,6 +6,11 @@ version = "0.1.0"
 [dependencies]
 # Sui framework auto-injected by the CLI based on installed version.
 # Pin explicitly once Day 1 toolchain bump (sui >= 1.55) lands.
+deepbook = { git = "https://github.com/MystenLabs/deepbookv3.git", subdir = "packages/deepbook", rev = "main" }
+
+[dep-replacements.testnet]
+deepbook = { git = "https://github.com/MystenLabs/deepbookv3.git", subdir = "packages/deepbook", rev = "main", published-at = "0x22be4cade64bf2d02412c7e8d0e8beea2f78828b948118d46735315409371a3c", original-id = "0x22be4cade64bf2d02412c7e8d0e8beea2f78828b948118d46735315409371a3c" }
+token = { git = "https://github.com/MystenLabs/deepbookv3.git", subdir = "packages/token", rev = "main", published-at = "0x36dbef866a1d62bf7328989a10fb2f07d769f4ee587c0de4a0a256e57e0a58a8", original-id = "0x36dbef866a1d62bf7328989a10fb2f07d769f4ee587c0de4a0a256e57e0a58a8" }
 
 [addresses]
 oathkeeper = "0x0"

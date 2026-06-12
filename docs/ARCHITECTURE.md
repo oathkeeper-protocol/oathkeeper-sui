@@ -38,7 +38,7 @@ claims inputs are verifiable today when only detection is.
 oathkeeper::oath          -- Oath shared object, Hot Potato mint, mark_breach, settle_epoch
 oathkeeper::believer      -- BelieverPosition, stake_for, claim_payout
 oathkeeper::doubter       -- DoubterPosition, stake_against, claim_payout
-oathkeeper::registry      -- scope-uniqueness table + exec-binding table
+oathkeeper::oath_registry      -- scope-uniqueness table + exec-binding table
 oathkeeper::economics     -- compute_split (10/20/70 bps); no LP pool
 oathkeeper::attestation   -- record_trade, dispute_attestation
 oathkeeper::signature     -- ed25519 (real) + ecdsa_k1 (pass-through until Day 16)
@@ -264,7 +264,7 @@ The scope-reservation table insert happens in `bind_exec_wallet` (not `start_epo
 
 ### Scope hash
 
-`registry::compute_scope_hash` runs `keccak256` over BCS-serialized:
+`oath_registry::compute_scope_hash` runs `keccak256` over BCS-serialized:
 `(exec_addr, venue, allowed_assets, epoch_duration_ms, max_drawdown_bps, min_trades, min_pnl_bps, min_volume_usdc, oath_type_tag)`
 
 Including `oath_type_tag` means a TradingOath and UptimeOath with identical fields do not collide. An Oathkeeper can run one TradingOath and one UptimeOath simultaneously.
@@ -376,7 +376,7 @@ public fun can_decrypt_oath_text(
     oath_id: ID,
     registry: &Registry,
 ): bool {
-    let oath = registry::get_oath(registry, oath_id);
+    let oath = oath_registry::get_oath(registry, oath_id);
     requester == oath.exec_addr && oath.status == STATUS_ACTIVE
 }
 ```
