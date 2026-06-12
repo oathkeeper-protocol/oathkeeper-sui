@@ -17,7 +17,7 @@ export const env = {
   registryId: process.env.OATHKEEPER_REGISTRY_ID ?? '0x0',
   usdcTreasuryId: process.env.OATHKEEPER_USDC_TREASURY_ID ?? '0x0',
   deployerKey: process.env.OATHKEEPER_DEPLOYER_KEY ?? '',
-  deepbookPackageId: process.env.DEEPBOOK_PACKAGE_ID ?? '0x22be4cade64bf2d02412c7e8d0e8beea2f78828b948118d46735315409371a3c',
+  deepbookPackageId: process.env.DEEPBOOK_PACKAGE_ID ?? '0x74cd5657843c627f3d80f713b71e9f895bbbeb470956d8a8e1185badf6cc77c8',
   deepbookRegistryId: process.env.DEEPBOOK_REGISTRY_ID ?? '0x7c256edbda983a2cd6f946655f4bf3f00a41043993781f8674a7046e8c0e11d1',
   deepTreasuryId: process.env.DEEP_TREASURY_ID ?? '0x69fffdae0075f8f71f4fa793549c11079266910e8905169845af1f5d00e09dcb',
   deepType: process.env.DEEP_TYPE ?? '0x36dbef866a1d62bf7328989a10fb2f07d769f4ee587c0de4a0a256e57e0a58a8::deep::DEEP',

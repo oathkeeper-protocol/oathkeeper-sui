@@ -28,6 +28,7 @@ Use `agent/.env.example` as the source of truth. The live path needs:
 - `OATHKEEPER_PROMISER_KEY`
 - `OATHKEEPER_EXEC_KEY`
 - `OATHKEEPER_DEPLOYER_KEY`
+- `DEEPBOOK_PACKAGE_ID`
 - `DEEPBOOK_BALANCE_MANAGER_ID`
 - `DEEPBOOK_TRADE_CAP_ID`
 - `DEEPBOOK_DEPOSIT_CAP_ID`
@@ -38,5 +39,5 @@ Use `agent/.env.example` as the source of truth. The live path needs:
 ## Current Blockers
 
 - Local toolchain is `sui 1.60.0-homebrew`; DeepBook v3 package resolution needs a newer Sui CLI, so the harness fails before spending gas until upgraded.
-- The repo worktree did not include `.context/CODEX-HANDOFF.md`; this doc captures the executable handoff state for this worker.
-- `bd` is not installed on PATH, so bead status updates could not be performed from this worktree.
+- The witnessed BalanceManager swap path still requires DEEP fee funding. The direct no-DEEP/input-fee DeepBook route does not apply to the current BalanceManager-anchored design.
+- U1 progress is tracked in `docs/research/deepbook-u1-live-swap-research.md`, this execution note, and `.beads/issues.jsonl`.

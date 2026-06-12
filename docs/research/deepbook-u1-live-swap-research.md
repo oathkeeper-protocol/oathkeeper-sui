@@ -88,12 +88,13 @@ sui client object 0x1c19362ca52b8ffd7a33cee805a67d40f31e6ba303753fd3a4cfdfacea71
 | SUI/DBUSDC pool | `0x1c19362ca52b8ffd7a33cee805a67d40f31e6ba303753fd3a4cfdfacea7163a5` | testnet object type `0xfb28...::pool::Pool<SUI, DBUSDC>`, shared |
 | Clock | `0x6` | Sui framework convention and local PTB builder |
 
-### Repo Constants That Are Now Stale
+### Repo Constants Updated During Integration
 
-`contracts/Move.toml`, `agent/src/sui/client.ts`, and `agent/.env.example` still default
-to `DEEPBOOK_PACKAGE_ID=0x22be4c...`. For U1, override with `0x74cd565...` after
-the CLI upgrade, and only patch code/docs after the live spike confirms compilation
-and transaction success.
+The coordinator integration updated `contracts/Move.toml`, `agent/src/sui/client.ts`,
+and `agent/.env.example` to use `DEEPBOOK_PACKAGE_ID=0x74cd565...` for U1. The
+contract dependency replacement also records the DeepBook original ID as
+`0xfb28c4cb...`, matching the shared object type origins. Reconfirm compilation after
+the Sui CLI upgrade before spending gas.
 
 ## BalanceManager and Cap APIs
 
@@ -244,4 +245,3 @@ If build is green, do the gas-spending spike in this order:
 5. Run one SUI -> DBUSDC `trade_via_deepbook` PTB with low `min_quote_out`.
 6. Read `balance<DBUSDC>(&BalanceManager)` and confirm Oathkeeper recorded the
    returned quote notional and post-swap equity.
-
