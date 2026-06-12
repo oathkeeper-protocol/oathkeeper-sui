@@ -15,6 +15,7 @@
     "indexer:once": "tsx src/indexer/index.ts",
     "runner": "tsx watch src/runner/index.ts",
     "prober": "tsx watch src/prober/index.ts",
+    "live:witnessed": "tsx src/sui/live-witnessed-swap.ts",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest --passWithNoTests",
     "typecheck": "tsc --noEmit",

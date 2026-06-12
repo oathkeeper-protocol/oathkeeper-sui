@@ -159,6 +159,46 @@ export interface WitnessedTradeOpts {
   minQuoteOut: bigint;
 }
 
+export interface DeepBookManagerBootstrapOpts {
+  owner: string;
+  quoteType: string;
+  initialQuoteDeposit?: bigint;
+}
+
+/** Create/share a DeepBook BalanceManager, mint all caps, and transfer caps to owner. */
+export function buildBootstrapDeepBookManagerPtb(o: DeepBookManagerBootstrapOpts): Transaction {
+  const tx = new Transaction();
+  const manager = tx.moveCall({
+    target: `${env.deepbookPackageId}::balance_manager::new`,
+  });
+  const depositCap = tx.moveCall({
+    target: `${env.deepbookPackageId}::balance_manager::mint_deposit_cap`,
+    arguments: [manager],
+  });
+  const withdrawCap = tx.moveCall({
+    target: `${env.deepbookPackageId}::balance_manager::mint_withdraw_cap`,
+    arguments: [manager],
+  });
+  const tradeCap = tx.moveCall({
+    target: `${env.deepbookPackageId}::balance_manager::mint_trade_cap`,
+    arguments: [manager],
+  });
+  if ((o.initialQuoteDeposit ?? 0n) > 0n) {
+    tx.moveCall({
+      target: `${env.deepbookPackageId}::balance_manager::deposit`,
+      typeArguments: [o.quoteType],
+      arguments: [manager, coinWithBalance({ type: o.quoteType, balance: o.initialQuoteDeposit! })],
+    });
+  }
+  tx.transferObjects([depositCap, withdrawCap, tradeCap], o.owner);
+  tx.moveCall({
+    target: '0x2::transfer::public_share_object',
+    typeArguments: [`${env.deepbookPackageId}::balance_manager::BalanceManager`],
+    arguments: [manager],
+  });
+  return tx;
+}
+
 export function buildTradeViaDeepBookPtb(o: WitnessedTradeOpts): Transaction {
   const tx = new Transaction();
   tx.moveCall({
