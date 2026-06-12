@@ -30,7 +30,7 @@ const VERTICALS: {
   blurb: string;
   status: "live" | "soon";
 }[] = [
-  { key: "TradingOath", label: "Trading", blurb: "DeepBook / Hyperliquid fills", status: "live" },
+  { key: "TradingOath", label: "Trading", blurb: "DeepBook spot proof path", status: "live" },
   // Uptime/Behavior have no attestation adapter shipped — enum-only. Marked roadmap so the
   // mint form never lets someone create an un-attestable oath (audit honesty fix).
   { key: "UptimeOath", label: "Uptime", blurb: "HTTPS prober (roadmap)", status: "soon" },
@@ -49,8 +49,9 @@ const EPOCHS = [
   { label: "30d", ms: 2_592_000_000 },
 ];
 
-// The real PTB: start_epoch (validate + reserve scope) -> bind_exec_wallet (bind + share),
-// atomic in one transaction. No Walrus/Seal step yet (that pipeline is wired separately).
+// The browser PTB creates SELF_REPORTED demo oaths:
+// start_epoch (validate + reserve scope) -> bind_exec_wallet (bind + share), atomic in one
+// transaction. No Walrus/Seal or WITNESSED DeepBook execution step is run from this form.
 const MINT_STEPS = [
   "Validating dimensions",
   "Reserving scope",
@@ -72,7 +73,6 @@ export default function MintPage() {
   const [minTrades, setMinTrades] = useState(10);
   const [pnl, setPnl] = useState(5); // min PnL, %
   const [volume, setVolume] = useState(0); // min volume, USDC
-  const [venue, setVenue] = useState<"DeepBook" | "Hyperliquid">("DeepBook");
   const [assets, setAssets] = useState<string[]>(["BTC-PERP", "ETH-PERP"]);
   const [epoch, setEpoch] = useState("7d");
   const [bondStr, setBondStr] = useState("");
@@ -163,7 +163,7 @@ export default function MintPage() {
       minPnlBps: dims.minPnlBps,
       minVolumeUsdc: dims.minVolumeUsdc,
       execAddr: account.address,
-      venue: 1, // Hyperliquid pass-through (no real sig needed on testnet)
+      venue: 1, // Demo signature pass-through; not a live Hyperliquid execution claim.
       allowedAssets: isTrading ? assets : [],
       epochDurationMs: epochMs,
       bond: BigInt(bond),
@@ -308,7 +308,7 @@ export default function MintPage() {
       </Section>
 
       {/* 2 · Oath text */}
-      <Section number="2" label="Oath text (sealed)">
+      <Section number="2" label="Oath text">
         <div
           className="rounded-md overflow-hidden"
           style={{ border: "1px solid var(--bone-200)", background: "var(--white)" }}
@@ -477,36 +477,25 @@ export default function MintPage() {
       <Section number="5" label="Scope">
         {isTrading ? (
           <>
-            <FieldLabel>Venue</FieldLabel>
-            <div className="flex gap-2 mb-2">
-              {(["DeepBook", "Hyperliquid"] as const).map((v) => {
-                const active = venue === v;
-                return (
-                  <button
-                    key={v}
-                    type="button"
-                    aria-pressed={active}
-                    onClick={() => setVenue(v)}
-                    className="px-4 py-2 rounded-md text-sm font-medium transition-colors"
-                    style={{
-                      color: active ? "var(--bone-950)" : "var(--bone-600)",
-                      background: active ? "var(--white)" : "transparent",
-                      boxShadow: `inset 0 0 0 1px ${
-                        active ? "var(--coral-deep)" : "var(--bone-200)"
-                      }`,
-                      cursor: "pointer",
-                    }}
-                  >
-                    {v}
-                  </button>
-                );
-              })}
+            <FieldLabel>Proof path</FieldLabel>
+            <div
+              className="font-mono mb-4"
+              style={{
+                fontSize: "0.64rem",
+                color: "var(--bone-700)",
+                background: "var(--cream-deep)",
+                border: "1px solid var(--bone-200)",
+                borderRadius: 6,
+                padding: "0.65rem 0.75rem",
+                lineHeight: 1.5,
+              }}
+            >
+              This browser mint creates a <strong>SELF_REPORTED</strong> testnet Oath.
+              <br />
+              <strong>WITNESSED</strong> DeepBook oaths are produced by the capture-at-execution
+              path, where fills route through the contract and final settlement needs the
+              bound BalanceManager anchor.
             </div>
-            <p className="font-mono mb-4" style={{ fontSize: "0.6rem", color: "var(--bone-600)" }}>
-              Browser mint currently creates SELF_REPORTED oaths. WITNESSED DeepBook oaths
-              are the capture-at-execution path: fills route through the contract, and final
-              settlement needs the bound BalanceManager anchor.
-            </p>
 
             <FieldLabel>Allowed assets</FieldLabel>
             <div className="flex flex-wrap gap-2 mb-1.5">

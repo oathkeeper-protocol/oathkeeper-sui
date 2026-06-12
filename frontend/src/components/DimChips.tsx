@@ -29,6 +29,7 @@ export default function DimChips({ dims }: { dims: OathDims }) {
             padding: "2px 7px",
             borderRadius: 4,
             letterSpacing: "0.01em",
+            whiteSpace: "nowrap",
           }}
         >
           {c}

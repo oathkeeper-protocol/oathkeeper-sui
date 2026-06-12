@@ -25,8 +25,8 @@ import DetailActionBar from "./DetailActionBar";
 // relative times inside AttestationFeed when not on-chain.
 const MOCK_NOW = Date.UTC(2026, 4, 31, 14, 0, 0);
 
-/** Synthetic Walrus blob id, deterministically derived from the oath id. */
-function walrusBlobFor(oathId: string): string {
+/** Synthetic text reference, deterministically derived from the oath id. */
+function textRefFor(oathId: string): string {
   const seed = oathId.replace(/^0x/, "");
   const hash = seed
     .split("")
@@ -153,7 +153,7 @@ export default function LiveOathView({
     { role: "Doubter", total: doubter },
   ];
 
-  const walrusBlobId = walrusBlobFor(oathId);
+  const textRef = textRefFor(oathId);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -162,7 +162,7 @@ export default function LiveOathView({
         {/* Live sentiment chart (on-chain oaths) */}
         {o.onchain && <LiveSentiment oathId={oathId} />}
 
-        {/* Sealed oath text */}
+        {/* Committed oath text */}
         <section
           style={{
             background: "var(--white)",
@@ -209,7 +209,7 @@ export default function LiveOathView({
                   strokeWidth="1.1"
                 />
               </svg>
-              Sealed
+              Committed
             </span>
           </div>
           <p
@@ -232,9 +232,9 @@ export default function LiveOathView({
             <span
               className="font-mono whitespace-nowrap"
               style={{ fontSize: "0.65rem", color: "var(--bone-600)" }}
-              title={`On-chain text reference (sealed_oath_text_root preview): ${walrusBlobId}`}
+              title={`On-chain text reference preview: ${textRef}`}
             >
-              ref {walrusBlobId}
+              ref {textRef}
             </span>
           </div>
         </section>
