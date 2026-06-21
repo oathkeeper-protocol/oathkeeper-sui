@@ -105,7 +105,9 @@ Example (Kept): bond 10000 + believer 2000 + doubter 1500 = 13500 in. Oathkeeper
 
 Example (Broken): same inputs. Oathkeeper -10000, believer -2000, doubter +1400, platform +5200, client +5400. Sum = 0.
 
-Both verified live on Sui testnet (see "What is shipped" below).
+Settlement economics run live on Sui testnet against the deployed package (see "What is
+shipped" below); the conservation identity is enforced in-contract and covered by the Move
+test suite.
 
 ---
 
@@ -144,8 +146,10 @@ trustless form is **capture-at-execution**: the operator trades *through* the oa
 contract records DeepBook's own returned executed amounts + an on-chain `balance()` equity
 anchor; the operator supplies no numbers. Oaths carry a `verifiability_tier` (`WITNESSED` vs
 `SELF_REPORTED`), enforced in-contract (`record_trade` is rejected on WITNESSED oaths). The
-**core logic + 6 tests are shipped** (59 Move tests; mint+anchor, record_trade rejection,
-Kept, drawdown low-water-mark Broken, dead-operator Broken). Honest limit: only
+**core logic + dedicated witnessed-tier tests are shipped** (mint+anchor, record_trade
+rejection, Kept, drawdown low-water-mark Broken, dead-operator Broken) alongside the full
+oathkeeper Move suite in `contracts/tests/`. The contract builds clean; running the suite
+needs Sui CLI >= 1.69 (see "Run it"). Honest limit: only
 drawdown-survival is wash-resistant; other dims are witnessed, not wash-proof. The thin
 DeepBook-calling glue (`trade_via_deepbook`) is written (`.context/deepbook-spike/`) and
 lands with the live testnet spike (it needs a Sui-CLI/address-management step + gas — see
@@ -187,8 +191,8 @@ The contract accepts `UptimeOath` and `BehaviorOath` at mint but has no attestat
 | Layer | Status | Notes |
 |-------|--------|-------|
 | Move contracts | Shipped | 7 protocol modules + 1 mock USDC module; zero `abort 0` bodies |
-| Move tests | **59 passing, 0 failing** | Conservation (Kept + Broken), dispute-record, and witnessed-tier tests |
-| Witnessed tier (core) | Shipped (contract + tests) | `verifiability_tier` (WITNESSED/SELF_REPORTED) + chain-anchored equity + witnessed-fill settlement; `record_trade` rejected on WITNESSED oaths. DeepBook glue (`trade_via_deepbook`) written, pending the live spike. |
+| Move tests | Shipped in `contracts/tests/` | Conservation (Kept + Broken), dispute-record, and witnessed-tier tests. Contract builds clean; running the suite needs Sui CLI >= 1.69 (the DeepBook dep pulls test code using post-1.60 stdlib symbols). |
+| Witnessed tier (core) | Shipped in **source + tests**; **not yet in the deployed package** | `verifiability_tier` (WITNESSED/SELF_REPORTED) + chain-anchored equity + witnessed-fill settlement; `record_trade` rejected on WITNESSED oaths — all present in `contracts/sources/witnessed.move` with tests. The **currently deployed** testnet package (`0xae9da7ca…`) predates this module and serves the SELF_REPORTED economics; redeploying with the witnessed module needs the CLI >= 1.69 step + the live DeepBook spike. DeepBook glue (`trade_via_deepbook`) is written (`.context/deepbook-spike/`). |
 | Reconciliation verifier | Shipped | `agent/src/recon` — pure deterministic core (8 vitest cases), venue adapters (DeepBook live / fixture / unverifiable), `pnpm reconcile` CLI + `pnpm recon:demo` |
 | On-chain dispute record | Shipped (contract) | `dispute_attestation` records durable `disputed` + `dispute_count`; reconciler files them. *(Live on testnet pending a redeploy — see roadmap.)* |
 | ed25519 signature verification | Shipped (Day 6) | `sui::ed25519` + `blake2b256(0x00 || pk)` address derivation; proven with offline vector in `ed25519_real_signature_verifies` test |
@@ -243,10 +247,11 @@ The contract accepts `UptimeOath` and `BehaviorOath` at mint but has no attestat
 
 ```bash
 # Move contracts (Sui Move)
+# Requires Sui CLI >= 1.69 (DeepBook v3 dependency pulls test code that uses
+# post-1.60 stdlib symbols; on older CLIs the dependency's own tests fail to compile).
 cd contracts
-sui move build
-sui move test
-# expected: Test result: OK. Total tests: 46; passed: 46; failed: 0
+sui move build          # builds clean
+sui move test           # runs the oathkeeper Move test suite
 
 # TypeScript agent -- e2e against live testnet
 # Requires: OATHKEEPER_PACKAGE_ID, OATHKEEPER_REGISTRY_ID,
