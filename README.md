@@ -254,10 +254,13 @@ sui move build          # builds clean
 sui move test           # runs the oathkeeper Move test suite
 
 # TypeScript agent -- e2e against live testnet
-# Requires: OATHKEEPER_PACKAGE_ID, OATHKEEPER_REGISTRY_ID,
-#           OATHKEEPER_USDC_TREASURY_ID, OATHKEEPER_DEPLOYER_KEY
+# Requires Node >= 20.12 (vitest 4 imports node:util `styleText`; Node 20.11 and
+# earlier fail at startup). Node 22/23 work. Also: OATHKEEPER_PACKAGE_ID,
+# OATHKEEPER_REGISTRY_ID, OATHKEEPER_USDC_TREASURY_ID, OATHKEEPER_DEPLOYER_KEY
 cd agent
 bun install
+# pnpm test       # reconciler unit suite (needs Node >= 20.12)
+# pnpm recon:demo # watch the reconciler catch a fabricated fill
 SCENARIO=kept  bunx tsx src/e2e.ts   # Kept scenario
 SCENARIO=broken bunx tsx src/e2e.ts   # Broken scenario
 

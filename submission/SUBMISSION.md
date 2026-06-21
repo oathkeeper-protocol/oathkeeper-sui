@@ -7,6 +7,22 @@
 
 ---
 
+## REMAINING HUMAN STEPS (everything else is done & verified)
+
+The repo is **public**, the testnet deployment is **live & verified**, and all docs are
+**honest-scoped**. Only these need a human:
+
+1. **Use Node ≥ 20** in your shell (`nvm use 20`), then optionally `cd agent && pnpm test`
+   to show the suite green on camera. (The agent requires Node 20+.)
+2. **Record the ≤5-min video** following [`docs/DEMO-SCRIPT.md`](../docs/DEMO-SCRIPT.md) +
+   [`VIDEO-GUIDE.md`](./VIDEO-GUIDE.md). Demo the **live** economics + reconciler. Frame the
+   witnessed/DeepBook tier as *"code-complete, deploying next"* — NEVER as live (it is not in
+   the deployed package; saying so risks disqualification).
+3. **Paste two URLs below** (video, frontend), then `git commit -am "docs: submission links" && git push`.
+4. **Submit on the Sui Overflow portal** with the repo link + video URL.
+
+---
+
 ## Links (HUMAN: paste before submitting)
 
 - **GitHub repo:** https://github.com/oathkeeper-protocol/oathkeeper-sui
